@@ -182,7 +182,7 @@ position no one stated — write a **todo asking about it**, not a decision expl
 
 ## Step 8 — Seed the skills
 
-`init` ships a starter library of 32 procedures in `article-docs/skills/skills.jsonl`:
+`init` ships a starter library of 31 procedures in `article-docs/skills/skills.jsonl`:
 literature search (OpenAlex, Semantic Scholar, arXiv, DBLP, PubMed/Europe PMC, Crossref,
 preprint servers, Unpaywall, paywalled databases, systematic search), validation of the
 paper's own argument (claim-evidence audit, number traceability, statistics, citation

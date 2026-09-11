@@ -19,7 +19,7 @@ own decision.
   commands are `/artdocs:*`; the index entry type `module` is now `section`
 
 ### Added
-- A **starter skill library** of 32 procedures shipped with every install, `status:
+- A **starter skill library** of 31 procedures shipped with every install, `status:
   unverified` until run in the project:
   - *finding the literature* — OpenAlex, Semantic Scholar, arXiv, DBLP, PubMed/Europe PMC,
     Crossref, the field's own preprint server (IACR ePrint, bioRxiv, SSRN, RePEc, HAL),

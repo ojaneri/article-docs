@@ -99,7 +99,7 @@ CLI.
 
 ## The skills that ship with it
 
-Every install starts with 32 procedures, each marked `unverified` until it is actually run in
+Every install starts with 31 procedures, each marked `unverified` until it is actually run in
 your project:
 
 **Finding the literature** — OpenAlex (key-less, broad), Semantic Scholar (citation graph,
