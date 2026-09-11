@@ -182,11 +182,15 @@ position no one stated — write a **todo asking about it**, not a decision expl
 
 ## Step 8 — Seed the skills
 
-`init` ships a starter library in `article-docs/skills/skills.jsonl`: literature search
-(OpenAlex, Semantic Scholar, arXiv, Crossref, paywalled databases), bibliography
-verification, collaborative-editor sync, the build, figures, artifact archiving and
-submission. Every one arrives `status: unverified`, `confidence: low`, because none of them
-has been run **here**.
+`init` ships a starter library of 32 procedures in `article-docs/skills/skills.jsonl`:
+literature search (OpenAlex, Semantic Scholar, arXiv, DBLP, PubMed/Europe PMC, Crossref,
+preprint servers, Unpaywall, paywalled databases, systematic search), validation of the
+paper's own argument (claim-evidence audit, number traceability, statistics, citation
+context, threats to validity, adversarial review), the repository (create it private,
+anonymise it for review, tag the submission, latexdiff the revision), bibliography
+verification, collaborative-editor sync, the build and page budget, figures, Zenodo with a
+reserved DOI, the preprint, the submission package and the rebuttal. Every one arrives
+`status: unverified`, `confidence: low`, because none of them has been run **here**.
 
 Your job is to make them true for this project:
 

@@ -11,3 +11,5 @@ Shipped with article-docs:
 | `literature-search.md` | which database answers which question, and how to record what you find |
 | `overleaf.md` | working with a collaborative editor without losing a co-author's edits |
 | `submission-checklist.md` | what to verify before a submission that cannot be undone |
+| `validating-the-thesis.md` | testing the paper's own argument before a reviewer does |
+| `revision-and-rebuttal.md` | answering reviewers without losing them |

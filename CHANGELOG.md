@@ -19,13 +19,24 @@ own decision.
   commands are `/artdocs:*`; the index entry type `module` is now `section`
 
 ### Added
-- A **starter skill library** shipped with every install, `status: unverified` until it is
-  run in the project: literature search on OpenAlex, Semantic Scholar, arXiv and Crossref,
-  paywalled databases through a browser session, bibliography verification against DOIs,
-  collaborative-editor sync (Git bridge and browser), the LaTeX build, vector figure export,
-  artifact archiving with a DOI, and the submission package.
-- Playbooks for **literature search**, **Overleaf without losing a co-author's edits**, and
-  a **pre-submission checklist**.
+- A **starter skill library** of 32 procedures shipped with every install, `status:
+  unverified` until run in the project:
+  - *finding the literature* — OpenAlex, Semantic Scholar, arXiv, DBLP, PubMed/Europe PMC,
+    Crossref, the field's own preprint server (IACR ePrint, bioRxiv, SSRN, RePEc, HAL),
+    Unpaywall for a legal full text, paywalled databases through a browser session, and a
+    logged systematic search;
+  - *validating the paper's own argument* — claim-evidence audit (including abstract-vs-results
+    overclaiming), number traceability back to the data, recomputed statistics, citation
+    context, threats-to-validity sweep, and an adversarial review pass;
+  - *repository and release* — create the repository private, publish an anonymised copy for
+    double-anonymous review, tag the submitted version, and latexdiff the revision;
+  - *bibliography, build and figures* — DOI verification, the build, the page budget per
+    section, vector figure export, a language pass that reports rather than rewrites;
+  - *archiving and submission* — a Zenodo deposit with the DOI reserved before submission, the
+    preprint, the submission package and the point-by-point rebuttal.
+- Playbooks for **literature search**, **validating the thesis**, **Overleaf without losing a
+  co-author's edits**, **revision and rebuttal**, and a **pre-submission checklist**.
+- Two categories software projects have no use for: `validation` and `repository`.
 - Skill categories rewritten for writing work: `build`, `figures`, `data`, `bibliography`,
   `collaboration`, `review`, `submission`, `reproducibility`, `process`.
 - Constitution rules that only matter for a paper: nothing is invented; a claim is

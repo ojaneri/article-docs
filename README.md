@@ -99,22 +99,40 @@ CLI.
 
 ## The skills that ship with it
 
-Every install starts with a library of procedures, marked `unverified` until they are run in
+Every install starts with 32 procedures, each marked `unverified` until it is actually run in
 your project:
 
-- **Literature search** — OpenAlex (key-less, broad), Semantic Scholar (citation graph, for
-  snowballing), arXiv (preprints), Crossref (authoritative metadata and publisher BibTeX),
-  and paywalled databases (IEEE Xplore, ACM DL, Scopus, Google Scholar) through a browser
-  session with institutional access.
-- **Bibliography verification** — every entry checked against its DOI before submission.
-- **Collaboration** — Overleaf over the Git bridge, or through a browser session when the
-  account has none, with the one rule that prevents the expensive accident: *read the
-  update history and rebase onto your co-authors' edits; never overwrite.*
-- **Build, figures, artifact archiving, submission** — the last two marked destructive, so
-  no agent runs them without asking.
+**Finding the literature** — OpenAlex (key-less, broad), Semantic Scholar (citation graph,
+for snowballing), arXiv and your field's own preprint server (IACR ePrint, bioRxiv, SSRN,
+RePEc, HAL), DBLP (the bibliography of record for CS), PubMed and Europe PMC, Crossref
+(authoritative metadata and publisher BibTeX), Unpaywall (a legal full text for a paywalled
+DOI), paywalled databases through a browser session, and a logged systematic search for when
+the search *is* the method.
 
-Plus playbooks: a literature-search strategy, the collaborative-editor merge, and a
-pre-submission checklist that covers anonymity, authorship and disclosure.
+**Validating your own argument, before a reviewer does** — audit every claim against the
+evidence that supports it (including claims stated more strongly in the abstract than in the
+results); trace every number back to the data that produced it; recompute the reported
+statistics; check each citation actually says what the sentence says it says; sweep the
+threats to validity; and finally an adversarial pass that reads the paper as someone who
+wants to reject it. The `validating-the-thesis.md` playbook puts them in the order that
+makes each one cheap.
+
+**Repository and release** — create the paper's repository (private, always), publish an
+anonymised copy for double-anonymous review, tag exactly what was submitted, and produce the
+marked-up `latexdiff` the editor asks for with the revision.
+
+**Bibliography, build and figures** — every entry verified against its DOI, the manuscript
+built and its length measured per section, figures exported as vector art that survives
+greyscale.
+
+**Archiving and submission** — a Zenodo deposit with the DOI *reserved* before submission, so
+the manuscript can cite its own artifact; the preprint; the submission package; and the
+point-by-point response to reviewers. The irreversible ones — publishing a deposit, posting a
+preprint, submitting — are marked destructive, so no agent runs them without asking.
+
+Plus playbooks: a literature-search strategy, validating the thesis, the collaborative-editor
+merge, revision and rebuttal, and a pre-submission checklist covering anonymity, authorship
+and disclosure.
 
 ## What it refuses to do
 
