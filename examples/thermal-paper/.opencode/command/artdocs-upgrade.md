@@ -1,0 +1,18 @@
+---
+description: Update this project's article-docs to the latest release
+---
+
+Update this project's article-docs to the latest release. $ARGUMENTS
+
+Do all of this without asking me for paths — you can work them out.
+
+1. **Get the latest distribution.** If a checkout already exists (try `~/tools/article-docs`, then ask me only if you cannot find one), `git -C <checkout> pull`. Otherwise clone it: `gh repo clone ojaneri/article-docs ~/tools/article-docs` — it is a private repository, so `gh` is the reliable route; fall back to `git clone https://github.com/ojaneri/article-docs.git ~/tools/article-docs` if `gh` is not installed.
+2. **Show me the plan first:** `node ~/tools/article-docs/bin/artdocs.mjs upgrade . --dry-run`. Report the installed version, the new one, and what would change. If it says nothing to do, stop there and tell me — do not invent work.
+3. **Apply it** once I approve: the same command without `--dry-run`.
+4. **Handle the merges.** It lists files under *Needs your eyes* — documents that ship with the framework but that we were meant to edit, so the new version landed beside ours as `<name>.new`. For each, diff them, tell me what actually changed in the framework's version and what we had customised, and recommend what to merge. **Never merge one without showing me the diff.** Delete the `.new` file only once I am happy.
+5. **Verify:** run `reindex`, `validate` and `status`, and show me the real output.
+6. **Offer the commit**, do not make it.
+
+Nothing under `modules/`, `apis/`, `infra/`, `skills/skills.jsonl`, `sessions/`, `identity/` or `context-packs/` is touched by an upgrade, and everything replaced is backed up to `article-docs/.backups/` first. Say so, so I know what was at risk and what was not.
+
+The CLI inside this project is the old one and cannot upgrade itself; the command above runs from the distribution checkout, which is why step 1 matters.

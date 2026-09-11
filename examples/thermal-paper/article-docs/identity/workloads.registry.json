@@ -1,0 +1,4 @@
+{
+  "note": "Non-human identities that access platforms on this project's behalf: CI runners, service accounts, deployment principals. Record only references to where credentials live — never a credential value. Prefer short-lived federated credentials (OIDC) over long-lived keys.",
+  "workloads": []
+}

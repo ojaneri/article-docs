@@ -1,0 +1,10 @@
+description = "Where does this project stand right now?"
+prompt = '''
+Run `node article-docs/bin/artdocs.mjs status` and tell me where we stand.
+
+Do not just paste the output. Read it and say what actually matters: is a session still open and how old, is there drift, are decisions sitting unreviewed, which skills went stale and are any of them ones we depend on. If several things are pending, say which one to do first and why.
+
+If it reports memory AT RISK — files not committed, commits not pushed, or no remote at all — say that first. That is the only line on the screen where waiting costs something that cannot be recovered.
+
+If nothing is pending, say so in one line — do not manufacture work.
+'''

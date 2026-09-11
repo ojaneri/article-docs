@@ -1,0 +1,11 @@
+description = "Print the line that lets anyone join this project"
+prompt = '''
+Get me the line that lets someone join this project's article-docs. {{args}}
+
+1. Run `node article-docs/bin/artdocs.mjs invite`. **No name or email is required** — the line it prints is generic: it names nobody, carries no secret and does not expire, so it works for one person or a whole team.
+2. Show me that **one line on its own**, ready to copy. It is the entire handover: they paste it into their own coding agent and it does the rest. Do not rewrite or embellish it.
+3. If it reports there is no git remote, stop and tell me — without one there is nothing to clone. Show me the two commands to add one; do not run them without asking.
+4. Only if I named someone, also run it with `--name "<name>" --role <Owner|Maintainer|Contributor>` to register them ahead of time, and remind me to commit and push `article-docs/team/users.registry.json`. Contributor is the safe default; only Owner and Maintainer may accept a decision. This step is optional — skipping it breaks nothing.
+
+Tell me what a clone does and does not carry: it carries all the memory and the `/artdocs:*` commands, so they install nothing. It does **not** carry `article-docs/.local/user.json` or `article-docs/.token`, which are gitignored so each person has their own identity.
+'''

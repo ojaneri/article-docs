@@ -1,0 +1,13 @@
+---
+description: Review the decisions waiting for a human and promote them
+---
+
+Review the decisions waiting on me. $ARGUMENTS
+
+1. Run `node article-docs/bin/artdocs.mjs promote` to list what is proposed.
+2. For each one, open its memory file and show me **the actual reasoning** — the choice, the alternative that was rejected, and what it costs. A one-line title is not enough to accept on.
+3. Recommend accept, reject or supersede for each, and say why. Flag any whose reasoning is thin or that contradicts an already-accepted decision.
+4. **Wait for me.** Only I can promote. Do not run `promote` with an id until I say so, and never with `--all` unless I explicitly ask.
+5. Once I decide, run the command and then `reindex`.
+
+If a decision turned out wrong, `--status rejected` is the honest outcome — do not quietly leave it proposed forever.

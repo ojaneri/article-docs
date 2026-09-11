@@ -1,0 +1,4 @@
+node_modules/
+.DS_Store
+# A article-docs installed *inside this repo* is never committed here
+/article-docs/

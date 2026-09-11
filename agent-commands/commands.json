@@ -1,0 +1,89 @@
+{
+  "note": "One definition per operation. init renders these into each tool's native command format. The behaviour itself lives in article-docs/AGENT-COMMANDS.md; these are wrappers.",
+  "commands": [
+    {
+      "name": "init",
+      "description": "Set up or finish setting up article-docs in this project",
+      "argHint": "[anything you want me to know about the project]",
+      "body": "Set up article-docs for this article. $ARGS\n\nIf `article-docs/` does not exist yet, find the article-docs distribution (ask me for its path if you cannot) and follow its **`BOOTSTRAP.md`** from step 1.\n\nIf a `article-docs/` directory exists but is **not** an installation — no `AI-INSTRUCTIONS.md`, no `bin/artdocs.mjs`, just hand-written notes — follow step 3b of `BOOTSTRAP.md`: rename it to `article-docs-legacy/`, install, then fold its content into the new structure and show me the mapping before deleting anything.\n\nIf `article-docs/` already exists, this is a finishing pass: follow **steps 2, 3 and 6 to 10 of `article-docs/BOOTSTRAP.md`**, which was installed alongside the memory. Concretely — read the project, show me what you inferred and ask only what you could not, then replace every remaining TODO in `article-docs/ARTICLE-MEMORY.md`, the *Project specifics* section of `article-docs/AI-INSTRUCTIONS.md`, `article-docs/repos.json` and `article-docs/team/`, seed the sections, claims, experiments and venue, and make the starter skills true for this project, and run `reindex` and `validate`.\n\nHold to the rules at the end of BOOTSTRAP.md: infer before asking, never fabricate a rationale, never mark a decision `accepted`, never put a credential in the memory, and set a skill's confidence to `low` if you did not actually run it. Tell me at the end which parts you inferred rather than verified."
+    },
+    {
+      "name": "upgrade",
+      "description": "Update this project's article-docs to the latest release",
+      "argHint": "",
+      "body": "Update this project's article-docs to the latest release. $ARGS\n\nDo all of this without asking me for paths — you can work them out.\n\n1. **Get the latest distribution.** If a checkout already exists (try `~/tools/article-docs`, then ask me only if you cannot find one), `git -C <checkout> pull`. Otherwise clone it: `gh repo clone ojaneri/article-docs ~/tools/article-docs` — it is a private repository, so `gh` is the reliable route; fall back to `git clone https://github.com/ojaneri/article-docs.git ~/tools/article-docs` if `gh` is not installed.\n2. **Show me the plan first:** `node ~/tools/article-docs/bin/artdocs.mjs upgrade . --dry-run`. Report the installed version, the new one, and what would change. If it says nothing to do, stop there and tell me — do not invent work.\n3. **Apply it** once I approve: the same command without `--dry-run`.\n4. **Handle the merges.** It lists files under *Needs your eyes* — documents that ship with the framework but that we were meant to edit, so the new version landed beside ours as `<name>.new`. For each, diff them, tell me what actually changed in the framework's version and what we had customised, and recommend what to merge. **Never merge one without showing me the diff.** Delete the `.new` file only once I am happy.\n5. **Verify:** run `reindex`, `validate` and `status`, and show me the real output.\n6. **Offer the commit**, do not make it.\n\nNothing under `modules/`, `apis/`, `infra/`, `skills/skills.jsonl`, `sessions/`, `identity/` or `context-packs/` is touched by an upgrade, and everything replaced is backed up to `article-docs/.backups/` first. Say so, so I know what was at risk and what was not.\n\nThe CLI inside this project is the old one and cannot upgrade itself; the command above runs from the distribution checkout, which is why step 1 matters."
+    },
+    {
+      "name": "invite",
+      "description": "Print the line that lets anyone join this project",
+      "argHint": "[a name, if you want them registered ahead of time]",
+      "body": "Get me the line that lets someone join this project's article-docs. $ARGS\n\n1. Run `node article-docs/bin/artdocs.mjs invite`. **No name or email is required** — the line it prints is generic: it names nobody, carries no secret and does not expire, so it works for one person or a whole team.\n2. Show me that **one line on its own**, ready to copy. It is the entire handover: they paste it into their own coding agent and it does the rest. Do not rewrite or embellish it.\n3. If it reports there is no git remote, stop and tell me — without one there is nothing to clone. Show me the two commands to add one; do not run them without asking.\n4. Only if I named someone, also run it with `--name \"<name>\" --role <Owner|Maintainer|Contributor>` to register them ahead of time, and remind me to commit and push `article-docs/team/users.registry.json`. Contributor is the safe default; only Owner and Maintainer may accept a decision. This step is optional — skipping it breaks nothing.\n\nTell me what a clone does and does not carry: it carries all the memory and the `/artdocs:*` commands, so they install nothing. It does **not** carry `article-docs/.local/user.json` or `article-docs/.token`, which are gitignored so each person has their own identity."
+    },
+    {
+      "name": "join",
+      "description": "Set this clone up for me as a new member of the project",
+      "argHint": "",
+      "body": "Set me up on this project's article-docs.\n\n1. Run `node article-docs/bin/artdocs.mjs join`. If it cannot drive the interactive identity prompt, read `git config user.name` and `user.email`, **confirm them with me**, and write `article-docs/.local/user.json` yourself. Never invent an identity and never reuse someone else's.\n2. Read `article-docs/HUMAN-ONBOARDING.md`, `ARTICLE-MEMORY.md` and `CONSTITUTION.md`.\n3. Then brief me in your own words, not as a file listing: what this article is, its sections and claims, the accepted decisions that constrain how we work here, which skills are destructive, and which are STALE.\n4. Tell me if a session is still open — someone may be mid-task — and if any decision is still `proposed` and waiting on a human.\n5. If I am not in `article-docs/team/users.registry.json`, say so and give me the exact `invite` command for an Owner to run."
+    },
+    {
+      "name": "status",
+      "description": "Where does this project stand right now?",
+      "argHint": "",
+      "body": "Run `node article-docs/bin/artdocs.mjs status` and tell me where we stand.\n\nDo not just paste the output. Read it and say what actually matters: is a session still open and how old, is there drift, are decisions sitting unreviewed, which skills went stale and are any of them ones we depend on. If several things are pending, say which one to do first and why.\n\nIf it reports memory AT RISK — files not committed, commits not pushed, or no remote at all — say that first. That is the only line on the screen where waiting costs something that cannot be recovered.\n\nIf nothing is pending, say so in one line — do not manufacture work."
+    },
+    {
+      "name": "promote",
+      "description": "Review the decisions waiting for a human and promote them",
+      "argHint": "[decision id]",
+      "body": "Review the decisions waiting on me. $ARGS\n\n1. Run `node article-docs/bin/artdocs.mjs promote` to list what is proposed.\n2. For each one, open its memory file and show me **the actual reasoning** — the choice, the alternative that was rejected, and what it costs. A one-line title is not enough to accept on.\n3. Recommend accept, reject or supersede for each, and say why. Flag any whose reasoning is thin or that contradicts an already-accepted decision.\n4. **Wait for me.** Only I can promote. Do not run `promote` with an id until I say so, and never with `--all` unless I explicitly ask.\n5. Once I decide, run the command and then `reindex`.\n\nIf a decision turned out wrong, `--status rejected` is the honest outcome — do not quietly leave it proposed forever."
+    },
+    {
+      "name": "hooks",
+      "description": "Install the pre-commit hook that keeps memory from rotting",
+      "argHint": "",
+      "body": "Set up the article-docs git hook.\n\nRun `node article-docs/bin/artdocs.mjs hooks install` and tell me what it did.\n\nExplain the split before I ask: `validate` **blocks** the commit, because an index pointing at a deleted file or a skill missing a required field is worse than no memory — it is trusted and wrong. `git drift` only **warns**, because plenty of commits legitimately touch code without changing what the memory says, and a hook that cries wolf gets disabled within a week.\n\nIf it refuses because a pre-commit hook already exists that article-docs did not write, do not overwrite it. Show me the existing hook and the two lines to add."
+    },
+    {
+      "name": "start",
+      "description": "Open a article-docs work session and load the memory for the task",
+      "argHint": "<what you are about to work on>",
+      "body": "Open a article-docs session for this task: $ARGS\n\nFollow sections **1 (start)** and **2 (context)** of `article-docs/AGENT-COMMANDS.md` exactly.\n\n1. Read `article-docs/.local/user.json` for the identity. If it is missing, ask me who I am before writing anything.\n2. Create the session file and append the `session_started` line to the activity log.\n3. Read the matching section / claim / experiment / venue file, the skills whose triggers match, and the decisions in that module.\n4. Then tell me, before writing a word: which module this touches, which skills apply, which accepted decisions constrain it, and what the memory does not cover."
+    },
+    {
+      "name": "context",
+      "description": "Load the memory relevant to a task without opening a session",
+      "argHint": "<module> <what you want to do>",
+      "body": "Load the article-docs memory relevant to: $ARGS\n\nFollow section **2 (context)** of `article-docs/AGENT-COMMANDS.md`.\n\nRead the matching section / claim / experiment / venue file, every skill in `article-docs/skills/skills.jsonl` whose triggers match, and the decisions in that module. Report which skills you selected and which accepted decisions constrain the work. Name anything the memory does not cover — that gap is what we will write down afterwards.\n\nIf I asked for a durable copy, run `node article-docs/bin/artdocs.mjs context <module> --task \"...\"`. Add `--verbosity low` if I said to keep it short or that tokens matter, `--verbosity high` if the territory is unfamiliar. Tell me what the pack cost — the command prints it."
+    },
+    {
+      "name": "remember",
+      "description": "Write what just changed into the project memory",
+      "argHint": "<what changed, if it is not obvious from the diff>",
+      "body": "Update the article-docs memory for the work we just did on the manuscript. $ARGS\n\nFollow section **3 (remember)** of `article-docs/AGENT-COMMANDS.md`.\n\n1. Run `node article-docs/bin/artdocs.mjs git drift` to see which sources changed without their memory.\n2. For each, update the matching file under `article-docs/sections/`, `claims/`, `experiments/`, `venue/` or `references/` — creating it if none exists. Write what a person would need in six months: what changed, what it depends on, what would break. Do not paste the diff.\n3. If we made a non-obvious or hard-to-reverse choice, also record a decision (section 4), status `proposed`.\n4. Run `reindex` then `validate` and show me the result."
+    },
+    {
+      "name": "decide",
+      "description": "Record an architectural decision in the project memory",
+      "argHint": "<the decision, and why>",
+      "body": "Record this decision in article-docs: $ARGS\n\nFollow section **4 (decide)** of `article-docs/AGENT-COMMANDS.md`.\n\nAppend it to the Decisions section of the relevant memory file with the next free `d-NNNN` id — ids are unique across the whole memory, not per file. **Status must be `proposed`** — you may never write `accepted`; only I promote a decision.\n\nWrite the rationale properly: what the alternative was, what it would have cost, and what this decision gives up. A decision with no stated cost is a note, not a decision.\n\nIf this supersedes an earlier decision, mark that one `superseded` and link the ids both ways. Then run `reindex`.\n\nIn a writing project the decisions worth recording are the framing, the contribution list, the baseline, the metric, the notation, what got cut to fit the page limit, and every constraint the venue or a co-author imposes."
+    },
+    {
+      "name": "skill",
+      "description": "Capture an operational procedure you just verified",
+      "argHint": "<the procedure>",
+      "body": "Capture this as a article-docs skill: $ARGS\n\nFollow section **5 (skill)** of `article-docs/AGENT-COMMANDS.md`.\n\nAppend one JSON line to `article-docs/skills/skills.jsonl` with every required field present. Set `last_verified` to today only if you actually ran it and saw it succeed — if you did not, say so and set `confidence` to `low`.\n\nFill `risks` honestly. A non-empty array marks the skill destructive, which means no agent may run it without asking. A safe procedure still needs `\"risks\": []`.\n\nWrite `triggers` as the words a person would actually say, not the formal name. Then run `validate`.\n\nThe starter library already covers literature search (OpenAlex, Semantic Scholar, arXiv, Crossref, paywalled databases), bibliography verification, collaborative-editor sync, the build, figures, artifact archiving and submission. Check whether this belongs in an existing skill before adding a new one, and never mark a skill verified because you read the command somewhere."
+    },
+    {
+      "name": "check",
+      "description": "Verify the project memory is sound and consistent with the code",
+      "argHint": "",
+      "body": "Verify the article-docs memory. Follow section **6 (check)** of `article-docs/AGENT-COMMANDS.md`.\n\nRun all three, and show me the real output — do not summarise a failure into a success:\n\n```bash\nnode article-docs/bin/artdocs.mjs reindex\nnode article-docs/bin/artdocs.mjs validate\nnode article-docs/bin/artdocs.mjs git drift\n```\n\nIf `validate` exits non-zero, fix the memory and run it again. If `git drift` names a file, either update that file's memory or tell me explicitly why it needs none. Also list any skill flagged STALE by `node article-docs/bin/artdocs.mjs skills list`, and say which ones are worth re-verifying.\n\nAlso report the todos that block submission: unmeasured numbers, empty table cells, unverified citations and placeholder figures. That list is the real answer to \"is this ready\"."
+    },
+    {
+      "name": "end",
+      "description": "Close the article-docs session with a summary of what happened",
+      "argHint": "",
+      "body": "Close the open article-docs session. Follow sections **6 (check)** and **7 (end)** of `article-docs/AGENT-COMMANDS.md`.\n\n1. Run `reindex`, `validate` and `git drift` first. Do not close a session over a failing validate.\n2. Fill in the session Notes: what changed, what we decided, what you actually verified, and what is still open.\n3. Include what was **tried and abandoned, and why** — that is the half of the record that has any value later.\n4. Set `Status: closed` and append the `session_end` line to `article-docs/team/activity-log.jsonl`."
+    }
+  ]
+}

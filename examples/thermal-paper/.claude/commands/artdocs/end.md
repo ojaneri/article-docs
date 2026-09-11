@@ -1,0 +1,10 @@
+---
+description: Close the article-docs session with a summary of what happened
+---
+
+Close the open article-docs session. Follow sections **6 (check)** and **7 (end)** of `article-docs/AGENT-COMMANDS.md`.
+
+1. Run `reindex`, `validate` and `git drift` first. Do not close a session over a failing validate.
+2. Fill in the session Notes: what changed, what we decided, what you actually verified, and what is still open.
+3. Include what was **tried and abandoned, and why** — that is the half of the record that has any value later.
+4. Set `Status: closed` and append the `session_end` line to `article-docs/team/activity-log.jsonl`.

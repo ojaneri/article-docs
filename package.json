@@ -1,0 +1,39 @@
+{
+  "name": "@ojaneri/artdocs",
+  "version": "1.0.0",
+  "description": "article-docs — a repository-native, Git-backed memory system for scientific articles and the AI agents that help write them. Zero dependencies, fully offline.",
+  "license": "MIT",
+  "author": "Osvaldo Janeri Filho",
+  "type": "module",
+  "bin": {
+    "artdocs": "bin/artdocs.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "template",
+    "agent-commands",
+    "BOOTSTRAP.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ojaneri/article-docs.git"
+  },
+  "keywords": [
+    "ai-agents",
+    "scientific-writing",
+    "research",
+    "latex",
+    "project-memory",
+    "agents-md",
+    "local-first",
+    "reproducibility"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

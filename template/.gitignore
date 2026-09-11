@@ -1,0 +1,8 @@
+# Local identity — never commit
+.local/
+# Write token for the separately-distributed dashboard — never commit
+.token
+# Automatic pre-write backups
+.backups/
+# Generated exports
+.generated/

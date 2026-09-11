@@ -1,0 +1,17 @@
+---
+description: Verify the project memory is sound and consistent with the code
+---
+
+Verify the article-docs memory. Follow section **6 (check)** of `article-docs/AGENT-COMMANDS.md`.
+
+Run all three, and show me the real output — do not summarise a failure into a success:
+
+```bash
+node article-docs/bin/artdocs.mjs reindex
+node article-docs/bin/artdocs.mjs validate
+node article-docs/bin/artdocs.mjs git drift
+```
+
+If `validate` exits non-zero, fix the memory and run it again. If `git drift` names a file, either update that file's memory or tell me explicitly why it needs none. Also list any skill flagged STALE by `node article-docs/bin/artdocs.mjs skills list`, and say which ones are worth re-verifying.
+
+Also report the todos that block submission: unmeasured numbers, empty table cells, unverified citations and placeholder figures. That list is the real answer to "is this ready".

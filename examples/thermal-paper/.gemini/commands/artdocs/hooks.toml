@@ -1,0 +1,10 @@
+description = "Install the pre-commit hook that keeps memory from rotting"
+prompt = '''
+Set up the article-docs git hook.
+
+Run `node article-docs/bin/artdocs.mjs hooks install` and tell me what it did.
+
+Explain the split before I ask: `validate` **blocks** the commit, because an index pointing at a deleted file or a skill missing a required field is worse than no memory — it is trusted and wrong. `git drift` only **warns**, because plenty of commits legitimately touch code without changing what the memory says, and a hook that cries wolf gets disabled within a week.
+
+If it refuses because a pre-commit hook already exists that article-docs did not write, do not overwrite it. Show me the existing hook and the two lines to add.
+'''

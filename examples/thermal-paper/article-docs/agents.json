@@ -1,0 +1,28 @@
+{
+  "entrypoint": "article-docs/AI-INSTRUCTIONS.md",
+  "pointer_files": {
+    "agents": "AGENTS.md",
+    "claude": "CLAUDE.md",
+    "gemini": "GEMINI.md",
+    "copilot": ".github/copilot-instructions.md",
+    "cursor": ".cursor/rules/article-docs.mdc",
+    "windsurf": ".windsurf/rules/article-docs.md"
+  },
+  "note": "AGENTS.md is the cross-tool convention read by Codex, opencode, Cursor, Windsurf, Zed and Jules. The others are tool-specific paths. Every pointer file says the same thing and defers to the entrypoint, so instructions live in exactly one place.",
+  "agents": [
+    {
+      "id": "generic",
+      "name": "Any writing or coding agent",
+      "role": "primary agent",
+      "reads": [
+        "article-docs/AI-INSTRUCTIONS.md",
+        "article-docs/ARTICLE-MEMORY.md",
+        "article-docs/venue/",
+        "article-docs/skills/skills.jsonl",
+        "article-docs/index.jsonl"
+      ],
+      "protocol": "session start -> read context (section, claims, venue) -> write -> update memory -> session end"
+    }
+  ],
+  "context_pack_dir": "article-docs/context-packs"
+}

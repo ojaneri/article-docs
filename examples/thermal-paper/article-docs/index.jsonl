@@ -1,0 +1,29 @@
+{"type":"section","id":"results","file":"sections/results.md","title":"results — what the measurements show"}
+{"type":"decision","id":"d-0001","file":"sections/results.md","title":"Report the derating ratio rather than absolute throughput as the headline number.","status":"accepted","author":"dana","date":"2026-07-02"}
+{"type":"decision","id":"d-0002","file":"sections/results.md","title":"Cut the per-layer breakdown figure to fit the page limit.","status":"proposed","author":"dana","date":"2026-07-19"}
+{"type":"todo","id":"t-0001","file":"sections/results.md","title":"Six cells of Table IV are empty pending the sustained-throughput campaign. The paper cannot be submitted with them empty.","status":"open","author":"dana"}
+{"type":"todo","id":"t-0002","file":"sections/results.md","title":"The caption of Fig. 2 still claims four modules; it shows three since the cut.","status":"open","author":"dana"}
+{"type":"section","id":"derating-ratio","file":"claims/derating-ratio.md","title":"derating-ratio — sustained throughput is a fixed fraction of burst throughput"}
+{"type":"decision","id":"d-0003","file":"claims/derating-ratio.md","title":"State the claim as workload-independent only if all four modules show it on both workloads.","status":"accepted","author":"dana","date":"2026-06-28"}
+{"type":"todo","id":"t-0003","file":"claims/derating-ratio.md","title":"Module D unmeasured; the claim stays hedged until it lands.","status":"open","author":"dana"}
+{"type":"section","id":"workshop","file":"venue/workshop.md","title":"venue — the target workshop"}
+{"type":"decision","id":"d-0005","file":"venue/workshop.md","title":"Target the workshop rather than the main conference.","status":"accepted","author":"dana","date":"2026-05-30"}
+{"type":"todo","id":"t-0006","file":"venue/workshop.md","title":"Confirm whether the workshop's class file changed this year; last year's is in paper/.","status":"open","author":"dana"}
+{"type":"section","id":"sustained-throughput","file":"experiments/sustained-throughput.md","title":"sustained-throughput — the steady-state campaign"}
+{"type":"decision","id":"d-0004","file":"experiments/sustained-throughput.md","title":"Hold ambient temperature rather than logging it as a covariate.","status":"accepted","author":"dana","date":"2026-06-15"}
+{"type":"todo","id":"t-0004","file":"experiments/sustained-throughput.md","title":"Module D, both workloads: 10 runs still to do.","status":"open","author":"dana"}
+{"type":"todo","id":"t-0005","file":"experiments/sustained-throughput.md","title":"The thermal sensor's calibration was never checked against an external probe. If a reviewer asks, there is no answer.","status":"open","author":"dana"}
+{"type":"section","id":"key-sources","file":"references/key-sources.md","title":"references — what the key sources are used for"}
+{"type":"decision","id":"d-0006","file":"references/key-sources.md","title":"Cite the burst-benchmark work in its published form, not the preprint.","status":"proposed","author":"dana","date":"2026-07-05"}
+{"type":"todo","id":"t-0007","file":"references/key-sources.md","title":"Three entries were typed by hand before the Crossref check existed. Verify authors and pages against the DOI.","status":"open","author":"dana"}
+{"type":"session","id":"2026-07-19-dana-cut-a-figure","file":"sessions/2026-07-19-dana-cut-a-figure.md","title":"Session: cut a figure to fit the 6-page limit","date":"2026-07-19"}
+{"type":"skill","id":"lit-search-openalex","file":"skills/skills.jsonl","title":"Search the literature on OpenAlex","status":"unverified","owner":"dana"}
+{"type":"skill","id":"lit-search-semantic-scholar","file":"skills/skills.jsonl","title":"Follow the citation graph on Semantic Scholar","status":"unverified","owner":"dana"}
+{"type":"skill","id":"lit-search-arxiv","file":"skills/skills.jsonl","title":"Search arXiv for preprints","status":"unverified","owner":"dana"}
+{"type":"skill","id":"lit-search-crossref","file":"skills/skills.jsonl","title":"Look a work up on Crossref","status":"unverified","owner":"dana"}
+{"type":"skill","id":"lit-search-paywalled-db","file":"skills/skills.jsonl","title":"Search a paywalled database in a browser session","status":"unverified","owner":"dana"}
+{"type":"skill","id":"bib-verify-entries","file":"skills/skills.jsonl","title":"Verify every bibliography entry against its DOI","status":"unverified","owner":"dana"}
+{"type":"skill","id":"latex-build","file":"skills/skills.jsonl","title":"Build the manuscript PDF","status":"active","owner":"dana"}
+{"type":"skill","id":"figures-export-vector","file":"skills/skills.jsonl","title":"Export figures as vector art","status":"unverified","owner":"dana"}
+{"type":"skill","id":"repro-artifact-archive","file":"skills/skills.jsonl","title":"Archive the artifact and mint a DOI","status":"unverified","owner":"dana"}
+{"type":"skill","id":"submission-package","file":"skills/skills.jsonl","title":"Assemble the submission package","status":"unverified","owner":"dana"}

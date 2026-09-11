@@ -1,0 +1,11 @@
+[
+  {
+    "id": "{{PROJECT_NAME}}",
+    "path": ".",
+    "type": "article",
+    "default_branch": "main",
+    "owner": "TODO",
+    "artdocs": "article-docs",
+    "sections": []
+  }
+]

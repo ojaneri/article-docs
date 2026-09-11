@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18', '20', '22', '24']
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Syntax
+        run: node --check bin/artdocs.mjs
+
+      - name: Test suite
+        run: npm test
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: A user clones and initialises a project
+        run: |
+          mkdir -p /tmp/sample && cd /tmp/sample && git init -q
+          git config user.email ci@example.com && git config user.name ci
+          node "$GITHUB_WORKSPACE/bin/artdocs.mjs" init . --name sample
+          node article-docs/bin/artdocs.mjs doctor
+          node article-docs/bin/artdocs.mjs reindex
+          node article-docs/bin/artdocs.mjs validate
+          node article-docs/bin/artdocs.mjs skills list
+          node article-docs/bin/artdocs.mjs export onboarding --format md
+          node article-docs/bin/artdocs.mjs git drift
+
+      - name: No deployment-specific references leaked in
+        run: |
+          if grep -rInE 'janeri\.com\.br|perito\.digital|kaponline|/var/www/html' \
+             bin template test README.md; then
+            echo "found a deployment-specific reference"; exit 1
+          fi
+
+      - name: No secrets leaked in
+        # Scans the shipped content only. Scanning "." would match this very
+        # pattern in this file, and .git objects besides.
+        run: |
+          if grep -rInE 'ghp_[A-Za-z0-9]{20}|github_pat_|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY' \
+             bin template test examples *.md package.json; then
+            echo "found something that looks like a credential"; exit 1
+          fi

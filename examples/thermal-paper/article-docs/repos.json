@@ -1,0 +1,15 @@
+[
+  {
+    "id": "thermal-paper",
+    "path": ".",
+    "type": "app",
+    "vcs": "git",
+    "hosting": "local-only",
+    "remotes": [],
+    "default_branch": "master",
+    "artdocs_in_subdirectory_of_repo": true,
+    "owner": "TODO",
+    "artdocs": "article-docs",
+    "sections": []
+  }
+]

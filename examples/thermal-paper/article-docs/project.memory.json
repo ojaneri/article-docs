@@ -1,0 +1,9 @@
+{
+  "name": "thermal-paper",
+  "artdocs_version": "4.1",
+  "description": "TODO: one sentence describing thermal-paper.",
+  "created_at": "2026-09-11",
+  "owner": "TODO",
+  "status": "bootstrap",
+  "vcs": "git"
+}
