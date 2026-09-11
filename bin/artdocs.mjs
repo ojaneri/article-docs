@@ -2005,7 +2005,10 @@ function collectStatus() {
       .map(l => { const m = /^(..)\s(.*)$/.exec(l); return m ? (m[2].includes(' -> ') ? m[2].split(' -> ')[1] : m[2]).trim() : null; })
       .filter(f => f && f.startsWith(prefix));
     const inArtDocs = changed.filter(f => f.startsWith(artDocsPrefix));
-    drift = changed.filter(f => !f.startsWith(artDocsPrefix))
+    // Git lists a wholly untracked directory as one entry, so it cannot say what
+    // inside it changed. `git drift` refuses to guess there; so does this.
+    const untrackedWhole = changed.some(f => f === prefix || f.slice(prefix.length) === '');
+    drift = untrackedWhole ? null : changed.filter(f => !f.startsWith(artDocsPrefix))
       .filter(f => {
         const top = f.slice(prefix.length).split('/')[0];
         return top && !inArtDocs.some(d => d.includes(top));
@@ -2036,6 +2039,7 @@ function collectStatus() {
     todos:     index.filter(e => e.type === 'todo' && e.status !== 'done'),
     skills,
     stale:     skills.filter(sk => isStale(sk.last_verified)),
+    unverified: skills.filter(sk => !sk.last_verified),
     destructive: skills.filter(sk => Array.isArray(sk.risks) && sk.risks.length),
     drift,
   };
@@ -2055,6 +2059,7 @@ function cmdStatus(asJson) {
       open_todos: st.todos.map(t => ({ id: t.id, title: t.title })),
       skills: st.skills.length,
       stale_skills: st.stale.map(sk => ({ id: sk.id, last_verified: sk.last_verified })),
+      unverified_skills: st.unverified.map(sk => sk.id),
       drift: st.drift,
     }, null, 2));
     return;
@@ -2084,7 +2089,9 @@ function cmdStatus(asJson) {
 
   line('sections', st.sections.length);
   line('skills', st.skills.length,
-    st.stale.length ? `${st.stale.length} STALE: ${st.stale.map(s => s.id).join(', ')}` : 'all verified');
+    [st.stale.length ? `${st.stale.length} STALE: ${st.stale.map(s => s.id).join(', ')}` : null,
+     st.unverified.length ? `${st.unverified.length} never verified here` : null,
+    ].filter(Boolean).join(' · ') || 'all verified');
   line('decisions', st.decisions.length,
     st.proposed.length ? `${st.proposed.length} proposed, awaiting a human` : 'none pending');
   line('open todos', st.todos.length);
@@ -2103,10 +2110,10 @@ function cmdStatus(asJson) {
   }
 
   if (st.drift === null) {
-    line('drift', '—', 'no git repository, so drift cannot be checked');
+    line('drift', '?', 'cannot be checked — no git repository, or the project is untracked');
   } else {
     line('drift', st.drift.length,
-      st.drift.length ? st.drift.slice(0, 4).join(', ') + (st.drift.length > 4 ? ', …' : '') : 'memory matches the code');
+      st.drift.length ? st.drift.slice(0, 4).join(', ') + (st.drift.length > 4 ? ', …' : '') : 'memory matches the manuscript');
   }
 
   const next = [];
@@ -2114,6 +2121,7 @@ function cmdStatus(asJson) {
   if (st.drift?.length) next.push('artdocs git drift         see what changed without its memory');
   if (st.proposed.length) next.push('artdocs promote           review the decisions waiting on you');
   if (st.stale.length) next.push('artdocs skills list       re-verify the stale skills');
+  if (st.unverified.length) next.push('artdocs skills list       ' + st.unverified.length + ' skill(s) were never run here — verify or delete them');
   if (st.openSessions.length) next.push('artdocs session end       close the open session');
   if (st.atRisk?.uncommitted.length) next.push('git add article-docs && git commit    the memory is not saved anywhere else');
   else if (st.atRisk && !st.atRisk.hasUpstream) next.push('git remote add origin <url>      so the memory survives this machine');
