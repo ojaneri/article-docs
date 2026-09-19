@@ -1680,6 +1680,55 @@ const MERGE_BY_HAND = [
 /** Directories that must exist; a later release may add one. */
 const REQUIRED_DIRS = ['sections', 'claims', 'venue', 'experiments', 'references', 'skills', 'sessions', 'identity', 'audit', 'context-packs', 'boards', 'reviews', '_archive'];
 
+/**
+ * Bring a project's skills/skills.jsonl up to date with the distribution's
+ * template — additively, never destructively. `upgrade` deliberately never
+ * touches skills/skills.jsonl (it is the project's own, hand-verified list:
+ * owner, status and last_verified are per-project facts an upgrade cannot
+ * know). This is the explicit, opt-in counterpart: it adds skills that are
+ * new in the template and does not touch a single field of an existing one.
+ */
+function cmdSkillsSync(targetArg, dryRun) {
+  if (!isDistribution()) {
+    console.error('`skills sync` only runs from a article-docs distribution checkout.');
+    console.error('  git clone https://github.com/ojaneri/article-docs.git ~/tools/article-docs');
+    console.error('  node ~/tools/article-docs/bin/artdocs.mjs skills sync /path/to/project');
+    process.exit(1);
+  }
+
+  const target  = resolve(targetArg || process.cwd());
+  const artDocs = join(target, 'article-docs');
+  const path    = join(artDocs, 'skills', 'skills.jsonl');
+  if (!existsSync(path)) {
+    console.error(`No skills/skills.jsonl at ${path}. Use \`init\` to install article-docs first.`);
+    process.exit(1);
+  }
+
+  const templatePath = join(DIST_ROOT, 'template', 'skills', 'skills.jsonl');
+  const template = readJsonl(templatePath);
+  const project  = readJsonl(path);
+  const haveIds  = new Set(project.map(sk => sk.id));
+
+  const toAdd = template.filter(sk => !haveIds.has(sk.id));
+  if (!toAdd.length) {
+    console.log(`${basename(target)}: skills/skills.jsonl already has every skill the template ships.`);
+    return;
+  }
+
+  console.log(`${basename(target)}: ${toAdd.length} new skill(s) in the template, `
+            + `${project.length} already in the project${dryRun ? '  (dry run — nothing will be written)' : ''}\n`);
+  for (const sk of toAdd) console.log(`  + ${sk.id}  (${sk.category})  ${sk.name}`);
+
+  if (dryRun) return;
+
+  backup(path);
+  writeJsonl(path, [...project, ...toAdd]);
+  console.log(`\nAdded. Every new skill lands as shipped — owner: "TODO", status: "unverified" — `
+            + `because whether it applies to THIS project, and with what real command, is project-specific `
+            + `judgment an upgrade cannot make. Run \`reindex\` next, then work through BOOTSTRAP.md step 8 `
+            + `for the new ones: a real command, an owner, and status: verified only after it actually runs here.`);
+}
+
 function cmdUpgrade(targetArg, agentsArg, dryRun) {
   if (!isDistribution()) {
     console.error('`upgrade` only runs from a article-docs distribution checkout.');
@@ -2462,7 +2511,16 @@ switch (cmd) {
     if (rest[0] === 'list')   { cmdSkillsList();           break; }
     if (rest[0] === 'search') { cmdSkillsSearch(rest[1]);  break; }
     if (rest[0] === 'verify') { cmdSkillsVerify(rest[1]);  break; }
-    console.error('Unknown skills subcommand. Options: list | search <q> | verify <id>');
+    if (rest[0] === 'sync')   {
+      let dir = null;
+      for (let i = 1; i < rest.length; i++) {
+        if (rest[i].startsWith('--')) continue;
+        dir = rest[i]; break;
+      }
+      cmdSkillsSync(dir, rest.includes('--dry-run'));
+      break;
+    }
+    console.error('Unknown skills subcommand. Options: list | search <q> | verify <id> | sync [dir] [--dry-run]');
     process.exit(1);
 
   case 'context':

@@ -1,6 +1,6 @@
 {
   "name": "@ojaneri/artdocs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "article-docs — a repository-native, Git-backed memory system for scientific articles and the AI agents that help write them. Zero dependencies, fully offline.",
   "license": "MIT",
   "author": "Osvaldo Janeri Filho",

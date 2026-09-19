@@ -2,3 +2,9 @@ node_modules/
 .DS_Store
 # A article-docs installed *inside this repo* is never committed here
 /article-docs/
+
+# Rastro deixado por rodar reindex/validate/skills contra este checkout por engano
+# (o CLI deveria ser rodado de dentro de um projeto instalado, nunca daqui)
+/.backups/
+/README.txt
+/index.jsonl

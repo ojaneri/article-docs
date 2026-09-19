@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.1.0 — 2026-09-19
+
+### Added
+- **5 new skills** in the starter library (31 → 36), adapted from concepts in
+  [imbad0202/academic-research-skills](https://github.com/imbad0202/academic-research-skills)
+  into this framework's own lightweight `skills.jsonl` shape — not a port of that project's
+  own multi-agent pipeline/hook architecture, which is a different, much heavier system built
+  for a different install path (a Claude Code plugin):
+  - `citation-retraction-check` (validation) — check every cited DOI against Crossref's
+    `update-to` field before submission
+  - `tortured-phrase-screen` (validation) — scan for synonym-substitution patterns associated
+    with paraphrasing tools and paper mills, in the manuscript's own prose and in suspect
+    sources
+  - `second-model-citation-spotcheck` (validation) — an independent model re-verifies a sample
+    of citations without seeing the manuscript's claim first
+  - `ai-use-disclosure` (process) — draft the AI-tool-use disclosure statement some venues now
+    require, grounded in the project's own audit log, never a boilerplate template
+  - `citation-format-convert` (build) — switch bibliography/in-text citation style when a
+    manuscript retargets a venue with different conventions
+- **`artdocs skills sync [dir] [--dry-run]`** — brings a project's `skills/skills.jsonl` up to
+  date with new skills shipped in later template releases. `upgrade` deliberately never
+  touches this file (owner/status/last_verified are project-specific facts it cannot know);
+  `skills sync` is the explicit, additive counterpart — it only appends skills whose `id`
+  is not yet present, and never touches a field of an existing one. Idempotent: running it
+  again once a project is current reports nothing to do.
+
 ## v1.0.0 — 2026-09-11
 
 **article-docs forked from [dev-docs](https://github.com/ojaneri/dev-docs) v4.1.0** and

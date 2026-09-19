@@ -99,7 +99,7 @@ CLI.
 
 ## The skills that ship with it
 
-Every install starts with 31 procedures, each marked `unverified` until it is actually run in
+Every install starts with 36 procedures, each marked `unverified` until it is actually run in
 your project:
 
 **Finding the literature** — OpenAlex (key-less, broad), Semantic Scholar (citation graph,
@@ -133,6 +133,21 @@ preprint, submitting — are marked destructive, so no agent runs them without a
 Plus playbooks: a literature-search strategy, validating the thesis, the collaborative-editor
 merge, revision and rebuttal, and a pre-submission checklist covering anonymity, authorship
 and disclosure.
+
+**Citation and disclosure integrity** (v1.1.0) — check every cited DOI against Crossref for a
+retraction or correction before it ships in the manuscript; screen prose for the
+synonym-substitution patterns known as tortured phrases; have a second model
+independently re-verify a sample of citations, blind to what the manuscript claims; draft
+the AI-tool-use disclosure statement a venue requires, from the project's own audit log;
+and convert citation style when a manuscript retargets a venue with different conventions.
+
+*Provenance:* these five are adapted from concepts in
+[imbad0202/academic-research-skills](https://github.com/imbad0202/academic-research-skills)
+into this framework's own `skills.jsonl` shape. That project is a much heavier system — a
+12+13+5-agent multi-pipeline Claude Code **plugin** with its own PreToolUse hook, ~300
+Python scripts and its own install path — and none of that architecture was brought in;
+only the procedural ideas, rewritten to this framework's own rules (nothing invented, no
+AI as author, `unverified` until actually run here).
 
 ## What it refuses to do
 
@@ -198,6 +213,7 @@ artdocs session end                                close it
 artdocs decide / skill                             (file edits — see AGENT-COMMANDS.md)
 artdocs promote [<id>] [--all] [--status <s>]      humans only
 artdocs skills list | search <q> | verify <id>     STALE after 120 days
+artdocs skills sync [<dir>] [--dry-run]            add new template skills, never touch yours
 artdocs reindex | validate | doctor                keep the memory honest
 artdocs git drift                                  sources changed without their memory
 artdocs invite | join                              add a co-author
