@@ -20,7 +20,11 @@ Non-negotiable rules for authors and AI agents working on this article.
    what to cut, which venue — becomes a **DECISION** entry with a stable ID, date, status,
    author and `last_updated_by`.
 6. Decisions start `proposed`; a human with Owner/Maintainer role promotes them to
-   `accepted`. Superseded decisions link to their replacement.
+   `accepted`. Superseded decisions link to their replacement. That human can say yes in a
+   conversation and have the agent run `artdocs promote` on their behalf — the decision is
+   still theirs, an agent is just typing — but the agent may never promote on its own
+   judgment, and never its own proposal without the human reading it first (§6b of
+   AGENT-COMMANDS.md).
    **An agent does not inherit the role of the human it runs under.** Its own permissions
    are declared in `identity/agents.registry.json`, and an agent that is not listed there is
    denied every protected action. `artdocs promote` enforces this.

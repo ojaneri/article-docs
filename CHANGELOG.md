@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.2.0 — 2026-09-19
+
+### Changed — `promote` no longer requires a terminal
+§6b of `AGENT-COMMANDS.md` said an agent may never run `artdocs promote`, full stop. That
+meant a human working through a live conversation with an agent — the normal way this
+framework is actually used in a chat-driven install — had to break out to a terminal and
+type the command themselves for every single decision, even one they had just approved in
+the conversation.
+
+The rule now distinguishes *deciding* (still, and always, human-only) from *typing the
+command* (mechanical — the same as an agent running `git commit` after someone says
+"commit"). The protocol: list what's `proposed` with the actual reasoning, wait for an
+explicit answer naming the specific id(s), then run `artdocs promote <id>` and report what
+changed. Never before an explicit answer, never for the agent's own just-written proposal
+without a human reading it first, never a bare "--all" unless they said all of them. Also
+updated: `CONSTITUTION.md` rule 6 and the safety-rules bullet in `AGENT-COMMANDS.md`.
+
+No code changed here — `cmdPromote`'s own enforcement (`PROMOTING_ROLES`, and
+`identity/agents.registry.json` for any workload with no human in the loop) already allowed
+this; it was the prose instruction stopping every agent from doing it.
+
 ## v1.1.0 — 2026-09-19
 
 ### Added

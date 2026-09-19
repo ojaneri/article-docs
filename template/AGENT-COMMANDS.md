@@ -205,11 +205,39 @@ file, either update that file's memory or say explicitly why it needs none.
 
 ## 6b. `promote` — a human accepts a decision
 
-**This is the one operation you may never perform.** An agent proposes; an author accepts.
+**You never decide.** An agent proposes; a human accepts. That does not change.
 
-`artdocs promote` lists everything sitting in `proposed`. Your job is to make that review
-possible: show the actual reasoning — the choice, the rejected alternative, the cost — and
-recommend accept, reject or supersede. Then wait.
+**But the human never has to open a terminal for it.** If you are in a live conversation
+with the person, you may run `artdocs promote` yourself — as their hands, not as the one
+deciding — once they have said yes to that specific decision, in that conversation. This is
+the same thing as running `git commit` after they say "commit": the decision is theirs: you
+are just the one typing.
+
+The protocol, in order:
+
+1. List what is `proposed` (`artdocs promote` with no id) and show the actual reasoning for
+   each — the choice, the rejected alternative, the cost. Never a bare id.
+2. Recommend accept, reject or supersede, and say why — but recommending is not deciding.
+3. **Wait for an explicit answer to the specific id(s).** "Sounds fine" about the batch is
+   not consent to promote item #4 — read what they actually approved. Silence, a change of
+   subject, or approval of something else is not a yes.
+4. Only then run `artdocs promote <id>` (one at a time, or the exact ids they named — never
+   `--all` unless they said all of them). Report back what changed: id → new status.
+
+Two failure modes to avoid, both real:
+- **Running it before they answered** — that is the agent deciding, dressed up as urgency.
+- **Making them type the command themselves** when they already said yes in the
+  conversation — that is just friction; you have the same terminal they would.
+
+This never extends to your own proposals from earlier in the *same* reply — a decision you
+just wrote needs a human to actually read it first, not a self-serve "does this look right,
+promoting now." And it never extends to a batch you assembled without listing each one —
+"approve what's pending" is not an answer until they have seen what is pending.
+
+The CLI still enforces the human-role half on its own (`PROMOTING_ROLES`, and
+`identity/agents.registry.json` for any workload running unattended, without a human in the
+loop) — this section is the other half, the one no code can enforce: never ask a person to
+open a console for something they just told you to do.
 
 ## 7. `end` — close the session
 
@@ -231,9 +259,13 @@ was tried and abandoned, and why.
 - **Never invent a number, a result, a citation or a page range.** A placeholder plus a
   todo is the correct output when the measurement does not exist yet.
 - **Never mark a claim supported without naming the evidence.**
-- **Never promote your own decision to `accepted`.** `artdocs promote` refuses unless the
-  human's role allows it **and** — when `ARTDOCS_AGENT` is set — your entry in
-  `identity/agents.registry.json` grants `memory_promote_canonical`.
+- **Never promote a decision the human has not explicitly answered, in that conversation.**
+  Running `artdocs promote <id>` *after* they said yes to that id is fine — see §6b, the
+  human never has to touch a terminal for it. Running it because it looks obviously right,
+  or as part of a batch nobody actually reviewed, is not fine: that is you deciding.
+  `artdocs promote` also refuses on its own when the human's role does not allow it, and —
+  when `ARTDOCS_AGENT` is set, i.e. a workload with no human in the loop — unless the
+  agent's entry in `identity/agents.registry.json` grants `memory_promote_canonical`.
 - **Never run a skill with a non-empty `risks` array** without explicit human confirmation.
   Submission is irreversible.
 - **Never add yourself or any model as an author or co-author**, in the manuscript or in a

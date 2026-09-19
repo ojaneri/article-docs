@@ -211,7 +211,7 @@ artdocs context <section> --task "..."             generate a context pack
 artdocs session start --section <s> --task "..."   open a session
 artdocs session end                                close it
 artdocs decide / skill                             (file edits — see AGENT-COMMANDS.md)
-artdocs promote [<id>] [--all] [--status <s>]      humans only
+artdocs promote [<id>] [--all] [--status <s>]      human decides; an agent may type it for them
 artdocs skills list | search <q> | verify <id>     STALE after 120 days
 artdocs skills sync [<dir>] [--dry-run]            add new template skills, never touch yours
 artdocs reindex | validate | doctor                keep the memory honest
