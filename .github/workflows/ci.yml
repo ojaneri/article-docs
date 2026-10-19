@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate template structure
+        run: |
+          test -f template/AI-INSTRUCTIONS.md
+          test -f template/AGENT-COMMANDS.md
+          test -f template/CONSTITUTION.md
+          test -f template/BOOTSTRAP.md
+          test -f template/ARTICLE-MEMORY.md
+          test -f template/HUMAN-ONBOARDING.md
+          test -f template/identity/humans.registry.json
+          test -f template/identity/agents.registry.json
+          test -f template/identity/workloads.registry.json
+          test -f template/identity/roles.md
+          test -f template/skills/templates/skill-template.md
+          test -f bin/artdocs.mjs
+          echo "Template structure valid"
+      - name: Verify artdocs CLI runs
+        run: node bin/artdocs.mjs --help

@@ -1,0 +1,12 @@
+{
+  "note": "Stable identities for the people on this article. Never contains passwords, API tokens, private keys or cloud access keys — those belong in a secret manager, and only a reference to one belongs here.",
+  "users": [
+    {
+      "user_id": "example-author",
+      "display_name": "Example Author",
+      "role": "Owner",
+      "added_on": "2026-01-01",
+      "email": "you@example.com"
+    }
+  ]
+}

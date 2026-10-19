@@ -1,0 +1,4 @@
+{
+  "note": "Automated workloads (CI jobs, cron tasks, unattended agents) that write to this repository. Each workload has its own identity so audit logs can distinguish human-driven writes from automated ones.",
+  "workloads": []
+}

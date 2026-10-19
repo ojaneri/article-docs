@@ -1,0 +1,22 @@
+{
+  "note": "Declared capabilities and boundaries per AI agent. An agent identifies itself by setting ARTDOCS_AGENT to one of the ids below. An agent that is not listed here is denied every protected action — an agent nobody has vouched for is not one to trust with the article's authoritative memory.",
+  "agents": [
+    {
+      "id": "example-agent",
+      "provider": "TODO — e.g. anthropic, openai, google",
+      "runtime": "TODO — e.g. claude-code, codex-cli, gemini-cli",
+      "note": "A template entry. Copy it, give it a real id, and delete this one.",
+      "permissions": {
+        "filesystem": "write",
+        "shell": true,
+        "network": "restricted",
+        "git_commit": true,
+        "git_push": false,
+        "memory_write_candidates": true,
+        "memory_promote_canonical": false,
+        "submit_to_venue": false,
+        "publish_artifact": false
+      }
+    }
+  ]
+}
