@@ -95,6 +95,21 @@ node article-docs/bin/artdocs.mjs validate
 That creates `article-docs/` with the full template, pointer files (`CLAUDE.md`, `AGENTS.md`,
 `GEMINI.md`) and a `project.memory.json`. The framework is now part of your repository.
 
+## Bootstrap with an AI agent
+
+Paste this one-liner into any AI coding agent (Claude Code, Gemini CLI, Codex, etc.) to
+install the framework — it will either scaffold a clean `article-docs/` if none exists, or
+adopt and reorganise any existing notes into the new structure without losing content:
+
+> Clone https://github.com/ojaneri/article-docs.git into ~/tools/article-docs, then run
+> `node ~/tools/article-docs/bin/artdocs.mjs init . --name "<article title>"` in this
+> repository; if an `article-docs/` folder already exists, follow the adoption protocol in
+> `~/tools/article-docs/template/BOOTSTRAP.md` §3b instead of overwriting it.
+
+The agent reads `template/BOOTSTRAP.md` for the full setup protocol, infers everything it
+can from the manuscript before asking questions, and runs `validate` before reporting
+success. No manual file editing required.
+
 ## Adding it to an existing article
 
 If your article already has a `CLAUDE.md`, `AGENTS.md`, `.cursorrules` or hand-written notes
