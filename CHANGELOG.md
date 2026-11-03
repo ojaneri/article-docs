@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.3.0 — 2026-11-03
+
+### Added — `/artdocs:virtual-review` and `VIRTUAL-REVIEWERS.md`
+A pre-submission review protocol. A panel of six reviewer roles reads the article domain by
+domain: editor pre-screen, hostile domain expert, methodologist, data versus artifact,
+references, language and venue style. Each domain gets a **Strong Accept, Weak Accept, Weak
+Reject or Strong Reject** verdict from fixed severity rules (S0–S4). The overall verdict and
+the gate follow from those, and are translated into the venue's own review form.
+- **Core domains:** P pre-flight on the memory, V venue fit, H build hygiene, R references, K
+  contribution and claims, M method and statistics, X evidence and artifacts, W writing, E
+  ethics, anonymity and AI policy.
+- **Packs:** systematic reviews, ML, security, automotive and safety, systems and benchmarking.
+- **Thirty lessons**, each a real rejection or internal audit, anonymized and mapped to the
+  checks that would have caught it.
+- **`--apply`** makes the fixes that need no new data on a local branch. Mechanical fixes are
+  applied. Wording fixes are applied *and* recorded as `proposed` decisions. Anything that
+  needs a measurement, a re-run, an unverified reference or a person becomes a todo. Nothing is
+  invented, no number changes without a data file behind it, and nothing is pushed.
+- Replaces the root-level `VIRTUAL-REVIEWS.md`, which no project received and whose
+  `/artdocs:virtual-review` command did not exist. The new file is framework-owned, so
+  `upgrade` installs and refreshes it.
+
+### Added — `artdocs review lint`
+The deterministic half of the protocol, offline and without dependencies. It checks:
+- placeholders, including project macros such as `\tbd`, `\PH` and `\phn`;
+- the build log: undefined citations and references, missing files, fatal errors, overfull
+  boxes, and a log older than the sources;
+- the rendered PDF through poppler when it is installed: `[?]`, `??`, fonts, metadata, page
+  count;
+- citations against the bibliography, including `\bibitem`s the text never cites;
+- anonymity, taken from `venue/`. A contradictory `venue/` is reported instead of guessed;
+- template tampering, hidden or LLM-directed text, editorial meta-language, acronyms used
+  before they are defined, and the abstract length;
+- credentials in the manuscript or the memory. The value is never printed;
+- AI co-author trailers in the history.
+
+It exits 1 while any S0 remains.
+
+### Changed
+- `reindex` reads `reviews/`, one level deep for `reviews/virtual/`. Decisions and todos
+  opened in a review round now reach `status` and `promote`; before, they were invisible.
+  Review files are indexed as type `review`.
+- New starter skill `virtual-review` (36 → 37).
+- `submission-checklist.md` and `validating-the-thesis.md` point at the panel.
+
 ## v1.2.0 — 2026-09-19
 
 ### Changed — `promote` no longer requires a terminal

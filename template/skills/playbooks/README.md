@@ -13,3 +13,6 @@ Shipped with article-docs:
 | `submission-checklist.md` | what to verify before a submission that cannot be undone |
 | `validating-the-thesis.md` | testing the paper's own argument before a reviewer does |
 | `revision-and-rebuttal.md` | answering reviewers without losing them |
+
+The full pre-submission review — a reviewer panel with a verdict per domain — is not a
+playbook here but `../../VIRTUAL-REVIEWERS.md`, because `upgrade` keeps it current.

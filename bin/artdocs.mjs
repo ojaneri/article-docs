@@ -5,7 +5,7 @@
  * ponytail: deliberate single-file design — resist splitting until there are 3+ commands that share non-trivial logic
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, readdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { join, dirname, basename, extname, relative, sep, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync, spawn } from 'node:child_process';
@@ -517,6 +517,22 @@ function cmdReindex() {
       } catch (e) {
         console.warn(`  WARN: ${dir}/${f}: ${e.message}`);
       }
+    }
+  }
+
+  // reviews/ — real and virtual rounds open decisions and todos too; without this they
+  // were invisible to status and promote. Nested one level for reviews/virtual/.
+  const reviewFiles = (dir) => !existsSync(r(dir)) ? [] : readdirSync(r(dir), { withFileTypes: true }).flatMap(e =>
+    e.isDirectory() ? (dir === 'reviews' ? reviewFiles(`${dir}/${e.name}`) : []) : e.name.endsWith('.md') ? [`${dir}/${e.name}`] : []);
+  for (const rel of reviewFiles('reviews')) {
+    try {
+      for (const e of parseMdSection(rel)) {
+        if (e.type === 'section') { e.type = 'review'; e.id = rel.slice('reviews/'.length, -3); }
+        entries.push(e);
+        bump(e.type);
+      }
+    } catch (e) {
+      console.warn(`  WARN: ${rel}: ${e.message}`);
     }
   }
 
@@ -1363,6 +1379,7 @@ function cmdInit(targetArg, nameArg, agentsArg) {
   console.log('  /artdocs:start <task>    open a session and load the memory that matters');
   console.log('  /artdocs:remember        write what changed back into the memory');
   console.log('  /artdocs:check           reindex, validate, and check for drift');
+  console.log('  /artdocs:virtual-review  the reviewer panel: a verdict per domain, before you submit');
   console.log('  The full playbook is article-docs/AGENT-COMMANDS.md — any agent can follow it.');
 }
 
@@ -1659,6 +1676,7 @@ function distVersion() {
 const FRAMEWORK_OWNED = [
   'AGENT-COMMANDS.md',
   'BOOTSTRAP.md',
+  'VIRTUAL-REVIEWERS.md',
   join('skills', 'templates', 'skill-template.md'),
   join('skills', 'playbooks', 'README.md'),
 ];
@@ -2409,6 +2427,317 @@ async function cmdJoin() {
   console.log('or, in your agent:     /artdocs:start <task>');
 }
 
+// ─── review lint ──────────────────────────────────────────────────────────────
+
+/**
+ * The deterministic half of VIRTUAL-REVIEWERS.md: everything a grep, the LaTeX log or
+ * poppler can decide, so the reviewer agents spend their reading on judgment.
+ * Offline by construction — URLs and DOIs are listed for the agent to check, never fetched.
+ * Check ids (H01…) are the ones VIRTUAL-REVIEWERS.md cites.
+ */
+const LINT_SKIP_DIRS = new Set(['article-docs', 'node_modules', '.git', '_archive', '.backups', '.preview', '.generated']);
+
+function findMainTex(start, depth = 3) {
+  const found = [];
+  const walk = (dir, d) => {
+    let names;
+    try { names = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of names) {
+      const abs = join(dir, e.name);
+      if (e.isDirectory()) { if (d > 0 && !LINT_SKIP_DIRS.has(e.name) && !e.name.startsWith('.')) walk(abs, d - 1); continue; }
+      if (!e.name.endsWith('.tex')) continue;
+      try { if (/^[^%\n]*\\documentclass/m.test(readFileSync(abs, 'utf8'))) found.push(abs); } catch { /* unreadable */ }
+    }
+  };
+  walk(start, depth);
+  // ponytail: "main.tex wins, else the shallowest" — a project with two papers must pass the path
+  found.sort((a, b) => (basename(b) === 'main.tex') - (basename(a) === 'main.tex')
+                       || a.split(sep).length - b.split(sep).length);
+  return found[0] || null;
+}
+
+/** Strip a LaTeX comment, keeping escaped \% */
+const stripTexComment = (line) => line.replace(/(^|[^\\])%.*$/, '$1');
+
+/** The main file plus everything it \input / \include / \subfile, in reading order. */
+function texClosure(mainAbs) {
+  const out = [], seen = new Set();
+  const visit = (abs) => {
+    if (seen.has(abs) || !existsSync(abs)) return;
+    seen.add(abs);
+    const text = readFileSync(abs, 'utf8');
+    out.push({ abs, text, lines: text.split(/\r?\n/) });
+    const re = /\\(?:input|include|subfile)\{([^}]+)\}/g;
+    for (const line of text.split(/\r?\n/)) {
+      let m; const clean = stripTexComment(line);
+      while ((m = re.exec(clean))) {
+        const name = m[1].trim();
+        const base = resolve(dirname(mainAbs), name);
+        visit(existsSync(base) && extname(base) ? base : base + '.tex');
+      }
+    }
+  };
+  visit(mainAbs);
+  return out;
+}
+
+function lintTool(bin, args) {
+  try { return execSync(`${bin} ${args}`, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }); }
+  catch (e) { return e.code === 'ENOENT' || e.status === 127 || /not (found|recognized)/i.test(String(e.stderr)) ? null : (e.stdout || ''); }
+}
+
+function cmdReviewLint(texArg, opts = {}) {
+  const findings = [];
+  const add = (id, sev, file, line, msg) => findings.push({ id, sev, file, line, msg });
+  const main = texArg ? resolve(process.cwd(), texArg) : findMainTex(SITE_ROOT);
+  if (!main || !existsSync(main)) {
+    console.error(texArg ? `No such file: ${texArg}` : `No .tex with \\documentclass found under ${SITE_ROOT}. Pass the path: artdocs review lint <main.tex>`);
+    process.exit(1);
+  }
+  const mainDir = dirname(main), stem = basename(main, '.tex');
+  const rel = (abs) => relative(process.cwd(), abs).split(sep).join('/') || basename(abs);
+  const files = texClosure(main);
+
+  // Anonymity: an explicit flag wins; otherwise venue/ decides, and we say which file did.
+  // A venue file that says both (an old target left under a new one) decides nothing: the
+  // regime is then a question for the author, which is the finding.
+  let anon = !!opts.anon, anonWhy = opts.anon ? '--anon' : opts.noAnon ? '--no-anon' : null;
+  if (!opts.anon && !opts.noAnon && existsSync(r('venue'))) {
+    const yes = [], no = [];
+    for (const f of readdirSync(r('venue')).filter(f => f.endsWith('.md'))) {
+      const t = readFileSync(r('venue', f), 'utf8');
+      if (/double[- ]?(blind|anonym)|duplo[- ]?cego/i.test(t)) yes.push(`venue/${f}`);
+      if (/single[- ]?(blind|anonym)|\bnot anonymous|non-anonymous|n[aã]o an[oô]nim|sem anonimato|SUPERSEDED/i.test(t)) no.push(`venue/${f}`);
+    }
+    if (yes.length && !no.length) { anon = true; anonWhy = yes[0]; }
+    else if (yes.length) add('H07', 'S1', yes[0], null, `venue/ is contradictory about anonymous review (${[...new Set([...yes, ...no])].join(', ')}) — settle it, then pass --anon or --no-anon`);
+  }
+
+  const each = (fn) => { for (const f of files) f.lines.forEach((raw, i) => fn(f, stripTexComment(raw), raw, i + 1)); };
+  const usesAcronymPkg = files.some(f => /\\usepackage(\[[^\]]*\])?\{(acronym|glossaries|acro)\}/.test(f.text));
+
+  // H01 placeholders · H06 meta-language · H07 self-identification · H08 template tampering · H17 hidden text
+  const RULES = [
+    ['H01', 'S0', /\\(todo|tbd|TBD|PH|phn|fixme|FIXME|hl)\b(?![a-zA-Z])/, 'placeholder macro survives'],
+    ['H01', 'S0', /\b(TODO|TBD|FIXME|XXX)\b/, 'TODO marker in the text'],
+    ['H01', 'S1', /\b(to be (done|evaluated|determined|measured|completed)|a fazer|pendente|em andamento)\b/i, 'unfinished-work wording — fine as future work, fatal as a step of this paper'],
+    ['H01', 'S2', /\bongoing\b/i, '"ongoing" — make sure it does not describe an unfinished step of this paper'],
+    ['H01', 'S2', /\\(textcolor|color)\{red\}/, 'red markup survives'],
+    ['H06', 'S1', /in response to (the |a )?(review|reviewer)|previous (review )?round|reviewers? (pointed out|asked|suggested|requested|noted)|in (the|a) previous version|not available to the authors/i, 'editorial meta-language: belongs in the response letter, not the paper'],
+    ['H08', 'S1', /\\vspace\*?\{\s*-|\\baselinestretch|\\linespread|\\enlargethispage|\\usepackage(\[[^\]]*\])?\{geometry\}|\\setlength\{\\(textheight|textwidth|columnsep|textfloatsep|floatsep|intextsep|abovecaptionskip|belowcaptionskip)\}/, 'template spacing changed — venues desk-reject for this'],
+    ['H17', 'S0', /\\(textcolor|color)\{white\}|\\fontsize\{0*\.?[01](pt)?\}|ignore (all )?(previous|prior) instructions|give this paper a (high|positive)/i, 'hidden text or text aimed at an LLM reviewer'],
+    ['H11', 'S4', /\b(the first|novel|state[- ]of[- ]the[- ]art|significantly|guarantee[sd]?|outperform\w*)\b/i, 'strong wording — needs a result, a citation or a test behind it'],
+    ['H16', 'S4', /\b100(\.0+)?\s*\\?%|\b1\.000\b|\b0\.0+\s*\\?%|\bzero (misses|false positives|errors)\b/i, 'perfect result — audit for leakage, in-sample evaluation or a result true by construction'],
+    ['H12', 'S2', /CVE-\d{4}-\d{4,}/, 'CVE id in the submission — some venues forbid it before disclosure'],
+  ];
+  if (anon) RULES.push(
+    ['H07', 'S0', /\bour (previous|prior|earlier) (work|paper|study|studies)\b|\bin our (previous|prior|earlier)\b|\bwe (previously|earlier) (showed|proposed|presented)\b/i, 'self-identifying phrasing under anonymous review'],
+    ['H07', 'S0', /github\.com\/(?!anonymous)[\w.-]+|gitlab\.com\/[\w.-]+|zenodo\.org\/records|10\.5281\/zenodo/i, 'identifying artifact link under anonymous review'],
+    ['H07', 'S0', /\\section\*?\{\s*Acknowledg/i, 'acknowledgments under anonymous review'],
+  );
+  const cited = new Map(), labels = new Map(), refs = new Set(), bibitems = new Map(), graphics = [];
+  let bibFiles = [], nociteAll = false, graphicsPaths = [mainDir];
+  // S4 hints are many by nature: one finding per rule, with its first locations
+  const hints = new Map();
+  let inBib = false;
+  each((f, line, raw, n) => {
+    if (/\\begin\{thebibliography\}/.test(line)) inBib = true;
+    for (const [id, sev, re, msg] of RULES) {
+      if (!re.test(line) || (inBib && sev !== 'S0')) continue;
+      if (sev !== 'S4') { add(id, sev, rel(f.abs), n, msg); continue; }
+      if (!hints.has(id)) hints.set(id, { msg, at: [] });
+      hints.get(id).at.push(`${rel(f.abs)}:${n}`);
+    }
+    if (/\\end\{thebibliography\}/.test(line)) inBib = false;
+    if (/%\s*CHECK\b/.test(raw)) add('H01', 'S1', rel(f.abs), n, '"% CHECK" — an unverified item left in the source');
+    if (anon && /\\(author|IEEEauthorblockN|affiliation)\{\s*[^}\s]/.test(line)) add('H07', 'S0', rel(f.abs), n, 'author block filled under anonymous review');
+    let m;
+    const citeRe = /\\(?:[a-zA-Z]*cite[a-zA-Z]*|nocite)\*?(?:\[[^\]]*\])*\{([^}]*)\}/g;
+    while ((m = citeRe.exec(line))) for (const k of m[1].split(',').map(s => s.trim()).filter(Boolean)) {
+      if (k === '*') { nociteAll = true; continue; }
+      if (!cited.has(k)) cited.set(k, `${rel(f.abs)}:${n}`);
+    }
+    const labRe = /\\label\{([^}]+)\}/g;
+    while ((m = labRe.exec(line))) labels.set(m[1], `${rel(f.abs)}:${n}`);
+    const refRe = /\\(?:[a-zA-Z]*ref|autoref|cref|Cref|pageref)\*?\{([^}]+)\}/g;
+    while ((m = refRe.exec(line))) for (const k of m[1].split(',')) refs.add(k.trim());
+    const biRe = /\\bibitem(?:\[[^\]]*\])?\{([^}]+)\}/g;
+    while ((m = biRe.exec(line))) bibitems.set(m[1].trim(), `${rel(f.abs)}:${n}`);
+    const bibRe = /\\(?:bibliography|addbibresource)\{([^}]+)\}/g;
+    while ((m = bibRe.exec(line))) bibFiles.push(...m[1].split(',').map(s => s.trim()));
+    const gpRe = /\\graphicspath\{((?:\{[^}]*\})+)\}/.exec(line);
+    if (gpRe) graphicsPaths.push(...[...gpRe[1].matchAll(/\{([^}]*)\}/g)].map(x => resolve(mainDir, x[1])));
+    const igRe = /\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}/g;
+    while ((m = igRe.exec(line))) graphics.push({ name: m[1].trim(), at: `${rel(f.abs)}:${n}` });
+  });
+  const at = (s) => { const i = s.lastIndexOf(':'); return [s.slice(0, i), Number(s.slice(i + 1))]; };
+  for (const [id, h] of hints) add(id, 'S4', ...at(h.at[0]), `${h.at.length}× ${h.msg} (${h.at.slice(0, 6).join(', ')}${h.at.length > 6 ? ', …' : ''})`);
+
+  // H04 citations against the bibliography
+  const bibKeys = new Set();
+  for (const b of bibFiles) {
+    const abs = resolve(mainDir, b.endsWith('.bib') ? b : b + '.bib');
+    if (!existsSync(abs)) { add('H04', 'S0', rel(main), null, `bibliography file not found: ${b}`); continue; }
+    for (const m of readFileSync(abs, 'utf8').matchAll(/@(\w+)\s*\{\s*([^,\s]+)\s*,/g)) if (!/^(string|comment|preamble)$/i.test(m[1])) bibKeys.add(m[2]);
+  }
+  for (const k of bibitems.keys()) bibKeys.add(k);
+  if (bibKeys.size) {
+    for (const [k, where] of cited) if (!bibKeys.has(k)) add('H04', 'S0', ...at(where), `cited but in no bibliography: ${k}`);
+    for (const [k, where] of bibitems) if (!cited.has(k)) add('H04', 'S1', ...at(where), `\\bibitem never cited in the text: ${k}`);
+    if (nociteAll) add('H04', 'S1', rel(main), null, '\\nocite{*} lists references the text never cites');
+  }
+
+  // H05 floats and figures
+  for (const [k, where] of labels) if (/^(fig|tab|table|figure)[:\-_]/i.test(k) && !refs.has(k)) add('H05', 'S3', ...at(where), `float never referenced in the text: ${k}`);
+  for (const g of graphics) {
+    const ok = graphicsPaths.some(p => ['', '.pdf', '.png', '.jpg', '.jpeg', '.eps'].some(x => existsSync(resolve(p, g.name + x))));
+    if (!ok) add('H05', 'S0', ...at(g.at), `figure file not found: ${g.name}`);
+  }
+
+  // Body text, roughly: for the abstract count and the acronym scan
+  const body = files.map(f => f.lines.map(stripTexComment).join('\n')).join('\n');
+  const absM = /\\begin\{abstract\}([\s\S]*?)\\end\{abstract\}/.exec(body) || /\\abstract\{([\s\S]*?)\}\s*\n/.exec(body);
+  const plain = (s) => s.replace(/\$[^$]*\$/g, ' x ').replace(/\\[a-zA-Z]+\*?(\[[^\]]*\])?/g, ' ').replace(/[{}~\\]/g, ' ');
+  const abstractWords = absM ? plain(absM[1]).split(/\s+/).filter(w => /\w/.test(w)).length : null;
+  if (abstractWords != null && opts.abstractMax && abstractWords > Number(opts.abstractMax)) {
+    add('H10', 'S1', rel(main), null, `abstract has ${abstractWords} words; the limit given is ${opts.abstractMax}`);
+  }
+
+  // H09 acronyms used before they are defined. ponytail: regex over source, not a parser —
+  // misses \newcommand'd acronyms and flags the odd all-caps word; the agent judges each hit.
+  if (!usesAcronymPkg) {
+    const COMMON = new Set(['IEEE', 'ACM', 'ISO', 'IEC', 'SAE', 'PDF', 'URL', 'DOI', 'USB', 'CPU', 'GPU', 'RAM', 'ROM', 'KB', 'MB', 'GB', 'TB', 'II', 'III', 'IV', 'VI', 'VII', 'VIII', 'IX', 'XI', 'XII', 'OK', 'USA', 'UK', 'EU', 'PhD', 'MSc']);
+    // Reading order: the input closure in order, then line, then column.
+    const first = new Map(), defined = new Map();
+    let bib = false, seq = 0;
+    files.forEach(f => f.lines.forEach((raw, i) => {
+      seq++;
+      if (/\\begin\{thebibliography\}/.test(raw)) bib = true;
+      if (bib) { if (/\\end\{thebibliography\}/.test(raw)) bib = false; return; }
+      const blank = (m) => ' '.repeat(m.length);   // keep columns, so order within a line holds
+      const line = stripTexComment(raw)
+        .replace(/\\(cite|ref|label|url|href|includegraphics|begin|end|usepackage|documentclass|input|include)\*?(\[[^\]]*\])?\{[^}]*\}/g, blank)
+        .replace(/\$[^$]*\$/g, blank);
+      const here = (col) => ({ ord: seq * 100000 + col, where: `${rel(f.abs)}:${i + 1}` });
+      for (const m of line.matchAll(/\(([A-Z][A-Za-z0-9]*[A-Z][A-Za-z0-9-]*?)s?\)/g)) if (!defined.has(m[1])) defined.set(m[1], here(m.index));
+      for (const m of line.matchAll(/\b([A-Z][A-Z0-9]{1,7})s?\b/g)) {
+        if (COMMON.has(m[1]) || first.has(m[1]) || (m[1].match(/[A-Z]/g) || []).length < 2) continue;
+        first.set(m[1], here(m.index));
+      }
+    }));
+    let shown = 0;
+    for (const [acr, use] of first) {
+      const def = defined.get(acr);
+      if (def && use.ord > def.ord) continue;   // its first use is the definition itself
+      if (shown++ < 40) add('H09', 'S3', ...at(use.where), def ? `${acr} used before it is defined (defined at ${def.where})` : `${acr} never defined in the text`);
+    }
+  }
+
+  // H02 the build log
+  const log = join(mainDir, stem + '.log');
+  const newestTex = Math.max(...files.map(f => statMtime(f.abs)));
+  if (!existsSync(log)) add('H02', 'S1', rel(main), null, 'no build log next to the main file — build it first (latex-build), the log is where problems are');
+  else {
+    const L = readFileSync(log, 'latin1');
+    if (statMtime(log) < newestTex) add('H02', 'S1', rel(log), null, 'build log is older than the sources — rebuild before trusting any of this');
+    const undefCites = new Set([...L.matchAll(/Citation [`'"]([^'"]+)['"] (?:on page \d+ )?undefined/g)].map(m => m[1]));
+    const undefRefs  = new Set([...L.matchAll(/Reference [`'"]([^'"]+)['"] (?:on page \d+ )?undefined/g)].map(m => m[1]));
+    if (undefCites.size) add('H02', 'S0', rel(log), null, `${undefCites.size} undefined citation(s) — they print as [?]: ${[...undefCites].slice(0, 8).join(', ')}`);
+    if (undefRefs.size)  add('H02', 'S0', rel(log), null, `${undefRefs.size} undefined reference(s) — they print as ??: ${[...undefRefs].slice(0, 8).join(', ')}`);
+    for (const m of L.matchAll(/! LaTeX Error: File [`'"]([^'"]+)['"] not found/g)) add('H02', 'S0', rel(log), null, `missing file: ${m[1]}`);
+    if (/Emergency stop|Fatal error occurred|==> Fatal error/.test(L)) add('H02', 'S0', rel(log), null, 'the build stopped with a fatal error');
+    const multi = new Set([...L.matchAll(/Label [`'"]([^'"]+)['"] multiply defined/g)].map(m => m[1]));
+    if (multi.size) add('H02', 'S2', rel(log), null, `labels defined twice: ${[...multi].slice(0, 8).join(', ')}`);
+    const over = [...L.matchAll(/Overfull \\hbox \(([\d.]+)pt too wide\)[^\n]*?lines? (\d+)/g)].filter(m => Number(m[1]) > 1);
+    if (over.length) add('H02', 'S2', rel(log), null, `${over.length} overfull box(es) over 1pt, worst ${Math.max(...over.map(m => Number(m[1]))).toFixed(1)}pt (source lines ${over.slice(0, 6).map(m => m[2]).join(', ')})`);
+    if (/destination with the same identifier/.test(L)) add('H02', 'S3', rel(log), null, 'duplicate hyperref destinations');
+  }
+  const blg = join(mainDir, stem + '.blg');
+  if (existsSync(blg)) {
+    const B = readFileSync(blg, 'latin1');
+    for (const m of B.matchAll(/I didn't find a database entry for "([^"]+)"/g)) add('H04', 'S0', rel(blg), null, `BibTeX found no entry for ${m[1]}`);
+    const warns = (B.match(/^Warning--/gm) || []).length;
+    if (warns) add('H04', 'S3', rel(blg), null, `${warns} BibTeX warning(s) — usually incomplete entries`);
+  }
+
+  // H03 / H14 the PDF, through poppler when it is installed
+  const pdf = opts.pdf ? resolve(process.cwd(), opts.pdf) : join(mainDir, stem + '.pdf');
+  let pages = null;
+  if (!existsSync(pdf)) add('H03', 'S1', rel(main), null, `no PDF at ${rel(pdf)} — the rendered PDF is what reviewers read`);
+  else {
+    if (statMtime(pdf) < newestTex) add('H03', 'S1', rel(pdf), null, 'PDF is older than the sources');
+    const q = JSON.stringify(pdf);
+    const text = lintTool('pdftotext', `-q ${q} -`);
+    if (text == null) add('H03', 'S4', rel(pdf), null, 'pdftotext not installed — PDF text checks skipped');
+    else {
+      const qs = (text.match(/\[\?\]/g) || []).length, qq = (text.match(/\?\?/g) || []).length;
+      if (qs) add('H03', 'S0', rel(pdf), null, `${qs} unresolved citation(s) [?] in the rendered PDF`);
+      if (qq) add('H03', 'S0', rel(pdf), null, `${qq} "??" in the rendered PDF — unresolved references`);
+      if (/\b(TODO|TBD|FIXME)\b/.test(text)) add('H03', 'S0', rel(pdf), null, 'placeholder text visible in the rendered PDF');
+    }
+    const info = lintTool('pdfinfo', q);
+    if (info) {
+      pages = Number(/^Pages:\s+(\d+)/m.exec(info)?.[1]) || null;
+      const author = /^Author:\s+(.+)$/m.exec(info)?.[1]?.trim();
+      if (anon && author) add('H14', 'S0', rel(pdf), null, 'PDF metadata carries an author under anonymous review');
+      if (/^Encrypted:\s+yes/m.test(info)) add('H14', 'S2', rel(pdf), null, 'PDF is encrypted');
+      if (pages && opts.pagesMax && pages > Number(opts.pagesMax)) add('H14', 'S0', rel(pdf), null, `${pages} pages; the limit given is ${opts.pagesMax}`);
+    }
+    const fonts = lintTool('pdffonts', q);
+    if (fonts) {
+      const rows = fonts.split('\n').slice(2).filter(Boolean).map(l => l.trim().split(/\s+/));
+      const notEmb = rows.filter(t => t.length >= 6 && t[t.length - 5] === 'no').length;
+      if (notEmb) add('H14', 'S1', rel(pdf), null, `${notEmb} font(s) not embedded — IEEE/ACM checkers reject this`);
+      if (/Type 3/.test(fonts)) add('H14', 'S2', rel(pdf), null, 'Type 3 (bitmap) fonts — usually a raster figure or an old package');
+    }
+  }
+
+  // H13 credentials in the manuscript or the memory. The value is never printed.
+  const SECRET = /-----BEGIN [A-Z ]*PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bgh[pousr]_[A-Za-z0-9]{36,}|\bxox[abprs]-[A-Za-z0-9-]{10,}|\bsk-(?:ant-)?[A-Za-z0-9_-]{20,}|\b(?:password|passwd|senha|pwd)\s*[:=]\s*(?!\s*(?:<|\*|TODO|\$\{|\{\{|none|null|""|''))\S{4,}/i;
+  const scanSecrets = (abs) => {
+    let text; try { text = readFileSync(abs, 'utf8'); } catch { return; }
+    text.split(/\r?\n/).forEach((l, i) => { if (SECRET.test(l)) add('H13', 'S0', rel(abs), i + 1, 'credential-like value — remove it and rotate it; it is in git history now'); });
+  };
+  files.forEach(f => scanSecrets(f.abs));
+  const walkMem = (dir) => {
+    if (!existsSync(dir)) return;
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.isDirectory()) { if (!['bin', '.backups', '.git', 'node_modules'].includes(e.name)) walkMem(join(dir, e.name)); }
+      else if (/\.(md|json|jsonl|txt|ya?ml)$/.test(e.name)) scanSecrets(join(dir, e.name));
+    }
+  };
+  walkMem(ROOT);
+
+  // H19 an AI system named as co-author in the project's history
+  const trailers = (gitRun('log -n 2000 --format=%B') || '').split('\n')
+    .filter(l => /^co-authored-by:.*(claude|anthropic|openai|chatgpt|gpt-|copilot|gemini|codex|cursor)/i.test(l.trim())).length;
+  if (trailers) add('H19', 'S1', '(git log)', null, `${trailers} commit(s) carry an AI co-author trailer — visible in any public artifact repo`);
+
+  const urls = [...new Set([...body.matchAll(/\\(?:url|href)\{([^}]+)\}/g)].map(m => m[1]))];
+  const order = { S0: 0, S1: 1, S2: 2, S3: 3, S4: 4 };
+  findings.sort((a, b) => order[a.sev] - order[b.sev] || a.id.localeCompare(b.id));
+  const counts = Object.fromEntries(Object.keys(order).map(s => [s, findings.filter(f => f.sev === s).length]));
+  const report = { tex: rel(main), files: files.map(f => rel(f.abs)), pdf: existsSync(pdf) ? rel(pdf) : null,
+                   pages, abstract_words: abstractWords, anonymous: anon, anonymous_from: anonWhy,
+                   cited: cited.size, bib_entries: bibKeys.size, urls, counts, findings };
+
+  if (opts.json) console.log(JSON.stringify(report, null, 2));
+  else {
+    console.log(`review lint — ${report.tex}  (${files.length} file(s), ${pages ?? '?'} pages, abstract ${abstractWords ?? '?'} words, ${anon ? `anonymous per ${anonWhy}` : 'not anonymous'})\n`);
+    if (findings.length) printTable(findings.map(f => ({ ...f, where: f.line ? `${f.file}:${f.line}` : f.file })), [
+      { label: 'Id', key: 'id', width: 4 }, { label: 'Sev', key: 'sev', width: 3 },
+      { label: 'Where', key: 'where', width: 34 }, { label: 'Finding', key: 'msg', width: 80 },
+    ]);
+    console.log(`\n${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join(' · ')}   ${urls.length} URL(s) to check by hand`);
+    console.log(counts.S0 ? `GATE: BLOCKED — ${counts.S0} S0 finding(s). Not submittable until they are fixed.` : 'GATE: no S0 — continue with the reviewer panel (VIRTUAL-REVIEWERS.md).');
+  }
+  process.exit(counts.S0 ? 1 : 0);
+}
+
+function statMtime(abs) {
+  try { return statSync(abs).mtimeMs; } catch { return 0; }
+}
+
 // ─── CLI Router ───────────────────────────────────────────────────────────────
 
 function usage() {
@@ -2440,6 +2769,9 @@ COMMANDS:
   invite | share [--name <n>] [--role <r>]  Print the line that lets anyone join
   join                                    Set up this clone for you (second engineer)
   git drift                               Detect source/docs drift via git status
+  review lint [<main.tex>] [--pdf <f>]    Deterministic pre-submission checks (VIRTUAL-REVIEWERS.md)
+    [--anon|--no-anon] [--pages-max <n>]    anon defaults to what venue/ says
+    [--abstract-max <n>] [--json]           exit 1 while any S0 finding remains
   export onboarding --format md           Write .generated/onboarding.md
   export audit --format json              Write .generated/audit.json with plane coverage
 `);
@@ -2539,6 +2871,21 @@ switch (cmd) {
   case 'git':
     if (rest[0] === 'drift') { cmdGitDrift(); break; }
     console.error('Unknown git subcommand. Options: drift');
+    process.exit(1);
+
+  case 'review':
+    if (rest[0] === 'lint') {
+      const valued = ['--pdf', '--pages-max', '--abstract-max'];
+      let tex = null;
+      for (let i = 1; i < rest.length; i++) {
+        if (rest[i].startsWith('--')) { if (valued.includes(rest[i])) i++; continue; }
+        tex = rest[i]; break;
+      }
+      cmdReviewLint(tex, { pdf: flag('--pdf'), anon: rest.includes('--anon'), noAnon: rest.includes('--no-anon'),
+                           pagesMax: flag('--pages-max'), abstractMax: flag('--abstract-max'), json: rest.includes('--json') });
+      break;
+    }
+    console.error('Unknown review subcommand. Options: lint [<main.tex>] [--pdf <f>] [--anon] [--json]');
     process.exit(1);
 
   case 'export':
