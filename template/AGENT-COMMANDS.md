@@ -247,19 +247,22 @@ open a console for something they just told you to do.
 The procedure is **`VIRTUAL-REVIEWERS.md`**, in this directory. It is long on purpose; follow
 it rather than a summary of it. Its spine:
 
-1. Build, then run the deterministic pass — it decides what a script can decide:
+1. Classify the article — its type (quantitative, qualitative, review, theoretical, design,
+   case study, argumentative, software/data…), field and format — because that picks the
+   standard it is judged by.
+2. Build or export the PDF, then run the deterministic pass — it decides what a script can decide:
    ```bash
-   node article-docs/bin/artdocs.mjs review lint <main.tex> --json   # exit 1 while any S0 remains
+   node article-docs/bin/artdocs.mjs review lint <main.tex | paper.pdf> --json   # exit 1 while any S0 remains
    ```
-2. A panel of six reviewer roles (editor, hostile domain expert, methodologist, data versus
-   artifact, references, language) reads the paper by domain; the lead verifies every S0/S1
-   against the source before acting on it.
-3. Each domain gets **Strong Accept, Weak Accept, Weak Reject or Strong Reject**; any S0 blocks
-   submission.
-4. With `--apply`: mechanical fixes are made, wording fixes are made **and** recorded as
+3. A panel of six reviewer roles (editor, hostile field expert, methodologist of the paper's
+   paradigm, evidence versus sources, references, language) reads the paper by domain and
+   pack; the lead verifies every S0/S1 against the source before acting on it.
+4. Each domain and pack gets **Strong Accept, Weak Accept, Weak Reject or Strong Reject**;
+   any S0 blocks submission.
+5. With `--apply`: mechanical fixes are made, wording fixes are made **and** recorded as
    `proposed` decisions, and anything that needs data or a person becomes a todo. All of it on
    a local branch `virtual-review/<date>`, nothing pushed.
-5. The round is written to `reviews/virtual/<date>-r<N>.md`; `reindex` reads `reviews/`, so its
+6. The round is written to `reviews/virtual/<date>-r<N>.md`; `reindex` reads `reviews/`, so its
    decisions and todos reach `status` and `promote`.
 
 ---

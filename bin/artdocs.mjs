@@ -2489,14 +2489,34 @@ function lintTool(bin, args) {
 function cmdReviewLint(texArg, opts = {}) {
   const findings = [];
   const add = (id, sev, file, line, msg) => findings.push({ id, sev, file, line, msg });
-  const main = texArg ? resolve(process.cwd(), texArg) : findMainTex(SITE_ROOT);
+  // Three modes. LaTeX: source, log, bibliography and PDF. PDF: the rendered text only — how a
+  // Word, LibreOffice or any other manuscript is checked. Markdown/plain text: the text as written.
+  const texFound = texArg ? null : findMainTex(SITE_ROOT);
+  const main = texArg ? resolve(process.cwd(), texArg) : texFound || (opts.pdf ? resolve(process.cwd(), opts.pdf) : null);
   if (!main || !existsSync(main)) {
-    console.error(texArg ? `No such file: ${texArg}` : `No .tex with \\documentclass found under ${SITE_ROOT}. Pass the path: artdocs review lint <main.tex>`);
+    console.error(texArg ? `No such file: ${texArg}` : `No .tex with \\documentclass found under ${SITE_ROOT}. Pass the path: artdocs review lint <main.tex | paper.pdf>`);
     process.exit(1);
   }
-  const mainDir = dirname(main), stem = basename(main, '.tex');
+  const ext = extname(main).toLowerCase();
+  if (['.docx', '.doc', '.odt', '.rtf', '.pages'].includes(ext)) {
+    console.error(`${basename(main)}: export it to PDF (with the venue's settings) and lint the PDF — the PDF is what reviewers read.`);
+    console.error('  e.g.  soffice --headless --convert-to pdf ' + basename(main));
+    process.exit(1);
+  }
+  const mode = ext === '.pdf' ? 'pdf' : ['.md', '.markdown', '.txt', '.rst'].includes(ext) ? 'text' : 'tex';
+  const isTex = mode === 'tex';
+  const mainDir = dirname(main), stem = basename(main, extname(main));
   const rel = (abs) => relative(process.cwd(), abs).split(sep).join('/') || basename(abs);
-  const files = texClosure(main);
+  let files;
+  if (mode === 'pdf') {
+    // reading order, not -layout: -layout interleaves the two columns of a conference paper
+    const text = lintTool('pdftotext', `-q ${JSON.stringify(main)} -`);
+    if (text == null) { console.error('pdftotext (poppler) is needed to lint a PDF. Install poppler-utils and run again.'); process.exit(1); }
+    files = [{ abs: main, text, lines: text.split(/\r?\n/) }];
+  } else if (mode === 'text') {
+    const text = readFileSync(main, 'utf8');
+    files = [{ abs: main, text, lines: text.split(/\r?\n/) }];
+  } else files = texClosure(main);
 
   // Anonymity: an explicit flag wins; otherwise venue/ decides, and we say which file did.
   // A venue file that says both (an old target left under a new one) decides nothing: the
@@ -2513,7 +2533,10 @@ function cmdReviewLint(texArg, opts = {}) {
     else if (yes.length) add('H07', 'S1', yes[0], null, `venue/ is contradictory about anonymous review (${[...new Set([...yes, ...no])].join(', ')}) — settle it, then pass --anon or --no-anon`);
   }
 
-  const each = (fn) => { for (const f of files) f.lines.forEach((raw, i) => fn(f, stripTexComment(raw), raw, i + 1)); };
+  const strip = isTex ? stripTexComment : (l) => l;   // "95% CI" is not a comment outside LaTeX
+  // Outside LaTeX the reference list is whatever follows its heading (small caps render as "R EFERENCES")
+  const REF_HEADING = /^\s*(#+\s*)?(R\s?EFERENCES|References|Bibliography|Works Cited|Refer[eê]ncias( Bibliogr[aá]ficas)?|Bibliografia|Referencias)\s*$/i;
+  const each = (fn) => { for (const f of files) f.lines.forEach((raw, i) => fn(f, strip(raw), raw, i + 1)); };
   const usesAcronymPkg = files.some(f => /\\usepackage(\[[^\]]*\])?\{(acronym|glossaries|acro)\}/.test(f.text));
 
   // H01 placeholders · H06 meta-language · H07 self-identification · H08 template tampering · H17 hidden text
@@ -2529,11 +2552,13 @@ function cmdReviewLint(texArg, opts = {}) {
     ['H11', 'S4', /\b(the first|novel|state[- ]of[- ]the[- ]art|significantly|guarantee[sd]?|outperform\w*)\b/i, 'strong wording — needs a result, a citation or a test behind it'],
     ['H16', 'S4', /\b100(\.0+)?\s*\\?%|\b1\.000\b|\b0\.0+\s*\\?%|\bzero (misses|false positives|errors)\b/i, 'perfect result — audit for leakage, in-sample evaluation or a result true by construction'],
     ['H12', 'S2', /CVE-\d{4}-\d{4,}/, 'CVE id in the submission — some venues forbid it before disclosure'],
+    ['H03', 'S0', /Error! (Reference source not found|Bookmark not defined)|Erro! (A origem da refer[eê]ncia n[aã]o foi encontrada|Indicador n[aã]o definido)|\{\s*(ADDIN|PAGEREF|HYPERLINK)\s/i, 'broken Word cross-reference or field code'],
+    ['H01', 'S0', /\[(ref|refs|citation needed|cite|reference|inserir refer[eê]ncia|ref\. necess[aá]ria)\]/i, 'citation placeholder'],
   ];
   if (anon) RULES.push(
     ['H07', 'S0', /\bour (previous|prior|earlier) (work|paper|study|studies)\b|\bin our (previous|prior|earlier)\b|\bwe (previously|earlier) (showed|proposed|presented)\b/i, 'self-identifying phrasing under anonymous review'],
     ['H07', 'S0', /github\.com\/(?!anonymous)[\w.-]+|gitlab\.com\/[\w.-]+|zenodo\.org\/records|10\.5281\/zenodo/i, 'identifying artifact link under anonymous review'],
-    ['H07', 'S0', /\\section\*?\{\s*Acknowledg/i, 'acknowledgments under anonymous review'],
+    ['H07', 'S0', isTex ? /\\section\*?\{\s*Acknowledg/i : /^\s*(#+\s*)?(Acknowledg(e)?ments?|Agradecimentos)\s*$/i, 'acknowledgments under anonymous review'],
   );
   const cited = new Map(), labels = new Map(), refs = new Set(), bibitems = new Map(), graphics = [];
   let bibFiles = [], nociteAll = false, graphicsPaths = [mainDir];
@@ -2541,7 +2566,7 @@ function cmdReviewLint(texArg, opts = {}) {
   const hints = new Map();
   let inBib = false;
   each((f, line, raw, n) => {
-    if (/\\begin\{thebibliography\}/.test(line)) inBib = true;
+    if (/\\begin\{thebibliography\}/.test(line) || (!isTex && REF_HEADING.test(line))) inBib = true;
     for (const [id, sev, re, msg] of RULES) {
       if (!re.test(line) || (inBib && sev !== 'S0')) continue;
       if (sev !== 'S4') { add(id, sev, rel(f.abs), n, msg); continue; }
@@ -2595,8 +2620,12 @@ function cmdReviewLint(texArg, opts = {}) {
   }
 
   // Body text, roughly: for the abstract count and the acronym scan
-  const body = files.map(f => f.lines.map(stripTexComment).join('\n')).join('\n');
-  const absM = /\\begin\{abstract\}([\s\S]*?)\\end\{abstract\}/.exec(body) || /\\abstract\{([\s\S]*?)\}\s*\n/.exec(body);
+  const body = files.map(f => f.lines.map(strip).join('\n')).join('\n');
+  // ponytail: outside LaTeX the abstract is "the text after an Abstract heading, up to Keywords or
+  // the Introduction" — fine for the usual layouts, null (not a guess) when the heading is absent
+  const absM = isTex
+    ? /\\begin\{abstract\}([\s\S]*?)\\end\{abstract\}/.exec(body) || /\\abstract\{([\s\S]*?)\}\s*\n/.exec(body)
+    : /(?:^|\n)\s*(?:#+\s*)?(?:Abstract|Resumo|Resumen|Résumé)\b[\s.:—–-]*([\s\S]{20,6000}?)(?=(?:\s|\n\s*#+\s*)(?:Keywords|Key words|Index Terms|Palavras-chave|Palabras clave|Mots-clés)\b|\n\s*(?:#+\s*)?(?:(?:1|I)\.?\s+)?Introduc)/i.exec(body);
   const plain = (s) => s.replace(/\$[^$]*\$/g, ' x ').replace(/\\[a-zA-Z]+\*?(\[[^\]]*\])?/g, ' ').replace(/[{}~\\]/g, ' ');
   const abstractWords = absM ? plain(absM[1]).split(/\s+/).filter(w => /\w/.test(w)).length : null;
   if (abstractWords != null && opts.abstractMax && abstractWords > Number(opts.abstractMax)) {
@@ -2612,12 +2641,15 @@ function cmdReviewLint(texArg, opts = {}) {
     let bib = false, seq = 0;
     files.forEach(f => f.lines.forEach((raw, i) => {
       seq++;
-      if (/\\begin\{thebibliography\}/.test(raw)) bib = true;
+      if (/\\begin\{thebibliography\}/.test(raw) || (!isTex && REF_HEADING.test(raw))) bib = true;
       if (bib) { if (/\\end\{thebibliography\}/.test(raw)) bib = false; return; }
       const blank = (m) => ' '.repeat(m.length);   // keep columns, so order within a line holds
       const line = stripTexComment(raw)
         .replace(/\\(cite|ref|label|url|href|includegraphics|begin|end|usepackage|documentclass|input|include)\*?(\[[^\]]*\])?\{[^}]*\}/g, blank)
         .replace(/\$[^$]*\$/g, blank);
+      // headings, running heads and table headers are set in capitals: not acronyms
+      const letters = line.replace(/[^A-Za-z]/g, '');
+      if (!isTex && letters.length >= 6 && letters.replace(/[^A-Z]/g, '').length / letters.length > 0.6) return;
       const here = (col) => ({ ord: seq * 100000 + col, where: `${rel(f.abs)}:${i + 1}` });
       for (const m of line.matchAll(/\(([A-Z][A-Za-z0-9]*[A-Z][A-Za-z0-9-]*?)s?\)/g)) if (!defined.has(m[1])) defined.set(m[1], here(m.index));
       for (const m of line.matchAll(/\b([A-Z][A-Z0-9]{1,7})s?\b/g)) {
@@ -2636,7 +2668,8 @@ function cmdReviewLint(texArg, opts = {}) {
   // H02 the build log
   const log = join(mainDir, stem + '.log');
   const newestTex = Math.max(...files.map(f => statMtime(f.abs)));
-  if (!existsSync(log)) add('H02', 'S1', rel(main), null, 'no build log next to the main file — build it first (latex-build), the log is where problems are');
+  if (!isTex) { /* no build log outside LaTeX — the PDF checks below carry H02's job */ }
+  else if (!existsSync(log)) add('H02', 'S1', rel(main), null, 'no build log next to the main file — build it first (latex-build), the log is where problems are');
   else {
     const L = readFileSync(log, 'latin1');
     if (statMtime(log) < newestTex) add('H02', 'S1', rel(log), null, 'build log is older than the sources — rebuild before trusting any of this');
@@ -2653,7 +2686,7 @@ function cmdReviewLint(texArg, opts = {}) {
     if (/destination with the same identifier/.test(L)) add('H02', 'S3', rel(log), null, 'duplicate hyperref destinations');
   }
   const blg = join(mainDir, stem + '.blg');
-  if (existsSync(blg)) {
+  if (isTex && existsSync(blg)) {
     const B = readFileSync(blg, 'latin1');
     for (const m of B.matchAll(/I didn't find a database entry for "([^"]+)"/g)) add('H04', 'S0', rel(blg), null, `BibTeX found no entry for ${m[1]}`);
     const warns = (B.match(/^Warning--/gm) || []).length;
@@ -2661,19 +2694,19 @@ function cmdReviewLint(texArg, opts = {}) {
   }
 
   // H03 / H14 the PDF, through poppler when it is installed
-  const pdf = opts.pdf ? resolve(process.cwd(), opts.pdf) : join(mainDir, stem + '.pdf');
+  const pdf = mode === 'pdf' ? main : opts.pdf ? resolve(process.cwd(), opts.pdf) : join(mainDir, stem + '.pdf');
   let pages = null;
   if (!existsSync(pdf)) add('H03', 'S1', rel(main), null, `no PDF at ${rel(pdf)} — the rendered PDF is what reviewers read`);
   else {
-    if (statMtime(pdf) < newestTex) add('H03', 'S1', rel(pdf), null, 'PDF is older than the sources');
+    if (mode !== 'pdf' && statMtime(pdf) < newestTex) add('H03', 'S1', rel(pdf), null, 'PDF is older than the sources');
     const q = JSON.stringify(pdf);
-    const text = lintTool('pdftotext', `-q ${q} -`);
+    const text = mode === 'pdf' ? files[0].text : lintTool('pdftotext', `-q ${q} -`);
     if (text == null) add('H03', 'S4', rel(pdf), null, 'pdftotext not installed — PDF text checks skipped');
     else {
       const qs = (text.match(/\[\?\]/g) || []).length, qq = (text.match(/\?\?/g) || []).length;
       if (qs) add('H03', 'S0', rel(pdf), null, `${qs} unresolved citation(s) [?] in the rendered PDF`);
       if (qq) add('H03', 'S0', rel(pdf), null, `${qq} "??" in the rendered PDF — unresolved references`);
-      if (/\b(TODO|TBD|FIXME)\b/.test(text)) add('H03', 'S0', rel(pdf), null, 'placeholder text visible in the rendered PDF');
+      if (mode !== 'pdf' && /\b(TODO|TBD|FIXME)\b/.test(text)) add('H03', 'S0', rel(pdf), null, 'placeholder text visible in the rendered PDF');
     }
     const info = lintTool('pdfinfo', q);
     if (info) {
@@ -2717,7 +2750,7 @@ function cmdReviewLint(texArg, opts = {}) {
   const order = { S0: 0, S1: 1, S2: 2, S3: 3, S4: 4 };
   findings.sort((a, b) => order[a.sev] - order[b.sev] || a.id.localeCompare(b.id));
   const counts = Object.fromEntries(Object.keys(order).map(s => [s, findings.filter(f => f.sev === s).length]));
-  const report = { tex: rel(main), files: files.map(f => rel(f.abs)), pdf: existsSync(pdf) ? rel(pdf) : null,
+  const report = { tex: rel(main), mode, files: files.map(f => rel(f.abs)), pdf: existsSync(pdf) ? rel(pdf) : null,
                    pages, abstract_words: abstractWords, anonymous: anon, anonymous_from: anonWhy,
                    cited: cited.size, bib_entries: bibKeys.size, urls, counts, findings };
 
@@ -2769,7 +2802,8 @@ COMMANDS:
   invite | share [--name <n>] [--role <r>]  Print the line that lets anyone join
   join                                    Set up this clone for you (second engineer)
   git drift                               Detect source/docs drift via git status
-  review lint [<main.tex>] [--pdf <f>]    Deterministic pre-submission checks (VIRTUAL-REVIEWERS.md)
+  review lint [<main.tex|paper.pdf|.md>]  Deterministic pre-submission checks (VIRTUAL-REVIEWERS.md)
+    [--pdf <f>]                             a PDF alone checks Word or any other source
     [--anon|--no-anon] [--pages-max <n>]    anon defaults to what venue/ says
     [--abstract-max <n>] [--json]           exit 1 while any S0 finding remains
   export onboarding --format md           Write .generated/onboarding.md

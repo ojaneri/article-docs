@@ -7,36 +7,54 @@
 > for each. With `--apply`, the fixes that can be made without new data are made, and the
 > rest become todos.
 >
-> **Where it came from.** It distils real reviews, internal audits of 25 article projects run
-> with article-docs, and the published reviewing standards listed at the end. Every lesson in
-> §8 happened to a real paper. That is why each one is phrased as a check rather than as advice.
+> **For any article.** The protocol has three layers:
+> - a **core** of nine domains that applies to every scholarly text: experimental, qualitative,
+>   theoretical, a review, an essay, a case report, a software paper, a chapter or a thesis;
+> - **packs** selected by what the article *is* (its type), *where it comes from* (its field)
+>   and *how long it is* (its format);
+> - the **venue's own rules**, read from `venue/`. Where they and this file disagree, the venue
+>   wins.
+>
+> It works on LaTeX, Word, Markdown or any other source, because the final checks run on the PDF.
+>
+> **Where it came from.** It distils real reviews, internal audits of article projects run with
+> article-docs, and the published reporting and reviewing standards listed in §12. The lessons
+> in §9 are real events; each is phrased as a general rule with the case as its example.
 >
 > This file is framework-owned: `upgrade` replaces it. Put project-specific additions in
-> `venue/` (venue rules) and in `reviews/` (what real reviewers said about this paper).
+> `venue/` (venue rules, and a field pack of your own: §8.4) and in `reviews/` (what real
+> reviewers said about this paper).
 
 ---
 
 ## 1. Ground rules
 
-1. **The rendered PDF is what reviewers read.** Every check that can be run on the PDF is run on
-   the PDF, after a fresh build. A clean source with a stale PDF is not clean.
-2. **Nothing is invented to close a gap.** No number, reference, standard clause, result or
-   co-author opinion is written into the paper unless it was read from a source in this run.
-   If the evidence does not exist, the finding is "this has no evidence". The fix is then a
-   measurement, a weaker claim or a stated limitation: those three, never a fourth.
+1. **The rendered document is what reviewers read.** Every check that can run on the PDF (or the
+   exact file the venue receives) runs on it, after a fresh build or export. A clean source
+   with a stale PDF is not clean.
+2. **Nothing is invented to close a gap.** No number, quotation, reference, source, proof step,
+   result or co-author opinion goes into the paper unless it was read from a source in this run.
+   If the evidence does not exist, the finding is "this has no evidence". The fix is then more
+   evidence, a weaker claim or a stated limitation: those three, never a fourth.
 3. **Every S0 and S1 finding is verified by the lead before it is acted on.** A reviewer agent
-   can be wrong. The lead re-reads the line, the data file or the source and records
-   *verified*, *rejected* or *uncertain* on the finding.
-4. **Independence.** Reviewers do not share context with each other or with the session that
+   can be wrong. The lead re-reads the line, the data, the transcript, the archive or the proof,
+   and marks the finding *verified*, *rejected* or *uncertain*.
+4. **Judge the paper by the standards of its own paradigm.** A qualitative study is not
+   faulted for lacking p-values, an essay for lacking a dataset, a proof for lacking
+   experiments. The type pack (§7) sets what rigour means for this paper; the core checks say
+   so where they differ by paradigm.
+5. **Independence.** Reviewers share no context with each other or with the session that
    drafted the text. Where several models are available, use a different one for each role (§3).
-5. **Nothing leaves the machine.** Fixes are applied on a local branch. Nothing is pushed to a
-   remote, an Overleaf project, a submission system or an artifact repository without the
-   human asking for that specific push. A co-author's edits on the collaborative editor are
-   fetched before anything is changed (`skills/playbooks/overleaf.md`).
-6. **Authorial choices stay authorial.** The title, the author list and order, the venue, and
-   whether to drop a contribution are proposed and never decided by the agent (§5, class B).
-7. **The checklist supports judgment; it does not replace it.** A "no" that the paper itself
-   justifies, in the text, is downgraded one severity level (§4). Reviewer anti-patterns (§9)
+6. **Nothing leaves the machine.** Fixes are applied on a local copy or branch. Nothing is pushed
+   to a remote, a collaborative editor (Overleaf, Google Docs, SharePoint), a submission system
+   or a repository unless the human asks for that specific push. Co-authors' edits are fetched
+   before anything is changed (`skills/playbooks/overleaf.md` describes the pattern for any
+   shared editor).
+7. **Authorial choices stay authorial.** The title, the author list and order, the venue, the
+   central thesis, and whether to drop a contribution are proposed, never decided by the agent
+   (§5, class B).
+8. **The checklist supports judgment; it does not replace it.** A "no" that the paper itself
+   justifies in the text is downgraded one severity level (§4). Reviewer anti-patterns (§10)
    apply to the virtual reviewers too.
 
 ---
@@ -44,88 +62,111 @@
 ## 2. The run, step by step
 
 ```
-locate → pre-flight → lint → panel → lead verification → verdicts → apply → rebuild → loop → record → report
+locate → classify → pre-flight → lint → panel → lead verification → verdicts → apply → rebuild → loop → record → report
 ```
 
 ### Step 0 — Locate the article
-The argument is a project directory, a main `.tex` or a PDF. Resolve:
-the main `.tex` (`\documentclass`), its `\input` closure, the `.bib`/`\bibitem`s, the build log
-and PDF, the artifact repository named in the paper, and the memory (`article-docs/`). Read
-`venue/`, `claims/`, `experiments/`, the open todos and the previous rounds in `reviews/`
+The argument is a project directory, a main source file (`.tex`, `.docx`, `.md`, `.odt`) or the
+PDF. Resolve:
+- the source and everything it includes;
+- the bibliography (`.bib`, reference-manager export, or the list in the document);
+- the rendered PDF;
+- the materials the paper cites: data, code, instruments, transcripts, archives;
+- the memory (`article-docs/`).
+
+Read `venue/`, `claims/`, `experiments/`, the open todos and the earlier rounds in `reviews/`
 before reading the paper. An objection that an earlier round already answered is not new.
 
-### Step 1 — Pre-flight on the memory (domain **P**)
-Run the P checks (§6). If the memory cannot name the target venue and its rules, stop. Ask the
-human: about a third of the problems below depend on the venue.
+For a Word or other non-LaTeX source, export a PDF first. Accept tracked changes in the export
+only, never in the source, and do not delete comments without asking.
 
-### Step 2 — The deterministic pass
+### Step 1 — Classify the article
+Record three things in the report, from `ARTICLE-MEMORY.md`, `venue/` or the text itself:
+- the **type**: one or more of §7;
+- the **field**: §8;
+- the **format**: §8.3.
+
+Ask the human if the type is ambiguous, because it decides which standard applies. At least
+one type pack always applies. If nothing fits, use **AR** (argumentative).
+
+### Step 2 — Pre-flight on the memory (domain **P**)
+Run the P checks (§6). If the memory cannot name the target venue and its rules, stop and ask:
+about a third of the problems below depend on the venue.
+
+### Step 3 — The deterministic pass
 ```bash
-node article-docs/bin/artdocs.mjs review lint <main.tex> --json [--pages-max N] [--abstract-max N] [--anon|--no-anon]
+node article-docs/bin/artdocs.mjs review lint <main.tex | paper.pdf> --json [--pages-max N] [--abstract-max N] [--anon|--no-anon]
 ```
-It runs checks H01–H19 offline: placeholders, the build log, the PDF through poppler, the
-bibliography, anonymity, template tampering, hidden text, credentials and AI co-author
-trailers. It exits 1 while any S0 remains. Its findings go to the panel as given facts. They
-are not re-derived by reading.
+- **On a LaTeX source** it checks the source, the build log, the bibliography and the PDF.
+- **On a PDF** it checks the rendered text and the file. This covers Word, Markdown and anything
+  else.
 
-### Step 3 — The panel
-Each reviewer gets the manuscript, the lint report, `venue/` and its own domains. It returns
-findings in the §10 format. Reviewers run in parallel when the tool allows it.
+Its checks are H01–H19 (§6, domain H). It runs offline and exits 1 while any S0 remains. Its
+findings go to the panel as given facts; they are not re-derived by reading.
 
-### Step 4 — Lead verification
-The lead walks every S0/S1 finding against the source (rule 3). It merges duplicates across
-reviewers and drops findings that fall under §9. Then it assigns each surviving finding a fix
-class (§5).
+### Step 4 — The panel
+Each reviewer gets the manuscript, the lint report, `venue/`, its domains and the packs that
+apply. It returns findings in the §11 format. Reviewers run in parallel when the tool allows it.
 
-### Step 5 — Verdicts
-Per domain, then overall, by the rules in §4. A **Weak Reject** or **Strong Reject** in a gate
-domain (P, V, H, R, E) blocks submission whatever the other domains say.
+### Step 5 — Lead verification
+The lead walks every S0/S1 finding against the source (rule 3). It merges duplicates and drops
+what §10 rules out. Then it assigns each surviving finding a fix class (§5).
 
-### Step 6 — Apply (only with `--apply`)
-§5. Class A and class B fixes are written on the branch `virtual-review/<YYYY-MM-DD>`. Class C
-fixes become todos.
+### Step 6 — Verdicts
+Per domain, then per pack, then overall, by §4. A **Weak Reject** or **Strong Reject** in a gate
+domain (P, V, H, R, E) blocks submission whatever the others say.
 
-### Step 7 — Rebuild and loop
-Rebuild (`latex-build`) and re-run the lint. Then re-run only the reviewers whose domains still
-hold S0/S1, plus R5 if the text changed. Stop when a round finds no new S0/S1, or after
-`--rounds` rounds (default 3).
+### Step 7 — Apply (only with `--apply`)
+§5. Class A and B fixes are written on the branch `virtual-review/<YYYY-MM-DD>`, or on a copy
+named `<file>.virtual-review-<date>.<ext>` when the source is not under git. Class C fixes
+become todos.
 
-Before closing, run the **number-set regression**: extract every number from the PDF text before
-and after the fixes. The two sets must be equal, except for numbers that a finding changed from
-a data file and that the record names.
+### Step 8 — Rebuild and loop
+Rebuild or re-export, re-run the lint, and re-run only the reviewers whose domains still hold
+S0/S1, plus R5 if the text changed. Stop when a round finds nothing new at S0/S1, or after
+`--rounds` (default 3).
 
-### Step 8 — Record
-Write `reviews/virtual/<YYYY-MM-DD>-r<N>.md` (§10). Register decisions (`d-NNNN`, status
-`proposed`) and todos (`t-NNNN`) inside it, then run `reindex`. `reindex` reads `reviews/`, so
-they show up in `status` and `promote`.
+Before closing, run the **content regression**: the set of numbers, and of direct quotations,
+in the rendered text must be unchanged. The only exceptions are items a finding changed from a
+source, and the record names each one.
 
-### Step 9 — Report to the human
-Answer in the human's language. The report contains:
+### Step 9 — Record
+Write `reviews/virtual/<YYYY-MM-DD>-r<N>.md` (§11). Register decisions (`d-NNNN`, status
+`proposed`) and todos (`t-NNNN`) inside it and run `reindex`: their status then shows up in
+`status` and `promote`.
 
-1. The gate: submittable or not.
-2. The verdict table, one row per domain.
-3. The overall verdict.
-4. The scores the venue's real form would get.
-5. What was applied, in classes A and B, with the branch name.
-6. What waits on the human or on data (class C).
-7. The three changes that would raise the overall verdict most, cheapest first.
+### Step 10 — Report to the human
+Answer in the human's language. The report contains, in this order:
+
+1. The classification.
+2. The gate: submittable or not.
+3. A verdict table with one row per domain and per pack.
+4. The overall verdict.
+5. The venue-form scores.
+6. What was applied, with where it lives.
+7. What waits on the human.
+8. What waits on evidence.
+9. The three changes that would raise the overall verdict most, cheapest first.
 
 ---
 
 ## 3. The panel
 
-| Role | Reads as | Domains | Model guidance |
-|---|---|---|---|
-| **R0 Editor / pre-screen** | an editor-in-chief deciding desk-reject in ten minutes: title, abstract, contributions, figures, conclusion, then the venue rules | P, V, K (fit and contribution), E (policy) | strong model |
-| **R1 Domain expert, hostile** | the reviewer with the highest confidence and the lowest score. They know the standards and platforms better than the authors | K, domain packs, technical precision in M | strongest model available |
-| **R2 Methodologist** | design, validity, statistics, baselines | M, packs SR/ML method items | strong model |
-| **R3 Data versus artifact** | every number in the paper against the files that produced it. Re-run what can be re-run | X | mid model, with shell access |
-| **R4 References** | every entry against Crossref/DBLP/arXiv/the publisher, and key citations against the cited text | R | mid model, with web access |
-| **R5 Language and venue style** | the venue's author guide and an editor's red pen | W, venue formatting in V | small model is enough |
+| Role | Reads as | Domains |
+|---|---|---|
+| **R0 Editor / pre-screen** | the editor deciding desk-reject in ten minutes: title, abstract, contributions, figures, conclusion, then the venue's scope and rules | P, V, K (fit and contribution), E (policy) |
+| **R1 Field expert, hostile** | the reviewer with the highest confidence and the lowest score, who knows the field's literature, terms and standards better than the authors | K, field packs, conceptual precision everywhere |
+| **R2 Methodologist of the paradigm** | a statistician for quantitative work; a qualitative methodologist for interviews or ethnography; a mathematician for proofs; a historian or philologist for archival and textual work; a review methodologist for reviews | M, type packs |
+| **R3 Evidence versus sources** | every number, quotation and factual statement against the data, transcripts, archives or proofs that support it. Re-runs, re-derives or re-reads what it can | X |
+| **R4 References** | every entry against the bibliographic record, and key citations against the cited text | R |
+| **R5 Language and venue style** | the venue's author guide and an editor's red pen | W, formatting in V |
 
-Why R1 is hostile: in one real review, a single Strong Reject from a high-confidence expert
+**Why R1 is hostile.** In one real review, a single Strong Reject from a high-confidence expert
 outweighed two Weak Accepts. An average score hides that reviewer, so the panel simulates them.
 
-A panel of one model playing six roles is weaker but acceptable. Say so in the record.
+**Models.** Use the strongest model for R1 and R2, a mid model with tool access for R3 and R4,
+and a small model for R5. A panel of one model playing six roles is weaker but acceptable; say
+so in the record.
 
 ---
 
@@ -133,18 +174,18 @@ A panel of one model playing six roles is weaker but acceptable. Say so in the r
 
 ### Severity of a finding
 
-| Level | Name | Meaning | Examples |
-|---|---|---|---|
-| **S0** | Blocking | desk reject or unpublishable as-is, whatever the merit | `[?]` in the PDF, placeholder in the text, nonexistent reference, page or template violation, anonymity broken, missing mandatory section, AI listed as author, credential in the paper |
-| **S1** | Critical | the central claim does not survive | claim without evidence, headline component not evaluated, leakage, unfair baseline, single run of a stochastic method, method described as executed but not executed |
-| **S2** | Major | weakens confidence or reproducibility, fixable | no dispersion, no effect size, generic threats to validity, incomplete artifact, density that hides the main points |
-| **S3** | Minor | clarity, presentation, completeness | acronym undefined at first use, float never referenced, incomplete bib entry |
-| **S4** | Suggestion | optional improvement | an extra figure, a stronger title |
+| Level | Name | Meaning |
+|---|---|---|
+| **S0** | Blocking | desk reject or unpublishable as-is, whatever the merit: an unresolved citation, a placeholder in the text, a nonexistent reference, a fabricated or misquoted source, a length or template violation, broken anonymity, a missing mandatory statement or ethics approval, an AI listed as author, plagiarism |
+| **S1** | Critical | the central claim does not survive: a claim without evidence, the headline component not evaluated, an argument whose conclusion is assumed in its premises, a proof with a gap at the main theorem, a design that cannot answer its question, a method described as done but not done |
+| **S2** | Major | weakens confidence or reproducibility, and is fixable: missing detail of procedure, no measure of uncertainty, limitations that are generic, counterarguments not engaged, materials unavailable without reason |
+| **S3** | Minor | clarity, presentation, completeness: an undefined term, an unreferenced figure, an incomplete reference |
+| **S4** | Suggestion | an optional improvement |
 
 Downgrade one level when the paper states the gap itself and justifies it in the text
-("we did not evaluate X because Y"). Never downgrade S0.
+("we did not do X because Y"). Never downgrade S0.
 
-### Verdict per domain
+### Verdict per domain or pack
 
 | Verdict | Rule |
 |---|---|
@@ -153,33 +194,26 @@ Downgrade one level when the paper states the gap itself and justifies it in the
 | **Weak Accept** | one or two S2, no S0/S1 |
 | **Strong Accept** | only S3/S4, or nothing |
 
-A domain that does not apply (the SR pack in an experimental paper) is reported as `n/a`, not as
-Strong Accept.
+A domain or pack that does not apply is reported as `n/a`, not as Strong Accept.
 
 ### Overall verdict
 - **Gate:** any S0 anywhere → overall **Strong Reject**, status *not submittable*.
-- Otherwise the overall verdict is the **worst** of the gate domains (P, V, H, R, E) and of
-  K, M and X. W and the packs can lower the result by one level and cannot raise it.
-- Report the confidence of each reviewer (1–5). Flag a spread of two or more verdict levels
-  between reviewers for the human: that is where a real panel splits.
+- Otherwise the overall verdict is the **worst** of: the gate domains (P, V, H, R, E), K, M, X,
+  and the type pack. W, the field packs and the format pack can lower the result by one level
+  and cannot raise it.
+- Report each reviewer's confidence (1–5). Flag for the human any spread of two or more verdict
+  levels between reviewers: that is where a real panel splits.
 
 ### Translating into the venue's own form
-Fill the form the venue actually uses, recorded in `venue/`. When the venue's form is unknown,
-use the JEMS-style form.
+Fill the form the venue actually uses, as recorded in `venue/`. Common shapes:
 
-| Form field | Fed by |
+| Form | Mapping |
 |---|---|
-| Relevance to the venue (1–3) | V08, K07 |
-| Readability and organization (1–5) | W |
-| Related work (1–5) | K03–K06, R |
-| Technical content (1–5) | M, X, packs |
-| Originality and contribution (1–5) | K |
-| Overall (1 Strong Reject … 5 Accept) | overall verdict: Strong Reject 1, Weak Reject 2, Weak Accept 4, Strong Accept 5; 3 = borderline, when reviewers split |
-| Confidence (1–3) | the R1 confidence, rescaled |
-
-**Other forms:**
-- **0–10 ranking** (e.g. an engineering congress): 2 / 4 / 6.5 / 8.5 for the four verdicts.
-- **Journal decisions**: Strong Accept = Accept/Minor, Weak Accept = Minor/Major, Weak Reject = Major/Reject & Resubmit, Strong Reject = Reject.
+| Journal decision | Strong Accept → Accept/Minor · Weak Accept → Minor/Major · Weak Reject → Major/Reject & resubmit · Strong Reject → Reject |
+| Conference overall 1–5 | Strong Reject 1 · Weak Reject 2 · split panel 3 · Weak Accept 4 · Strong Accept 5 |
+| Ranking 0–10 | 2 · 4 · 6.5 · 8.5, in the same order |
+| Criterion scores (originality, significance, soundness, clarity, related work, relevance) | originality and significance ← K; soundness ← M, X, type pack; clarity ← W; related work ← K, R; relevance ← V08 |
+| Humanities / book chapter reports | a recommendation plus a narrative: use the verdict and the top findings of K, M (AR pack) and R |
 
 ---
 
@@ -187,315 +221,464 @@ use the JEMS-style form.
 
 | Class | What it is | Under `--apply` |
 |---|---|---|
-| **A — mechanical** | changes no meaning: build errors, broken `\cite`/`\ref`, overfull boxes, missing figure path, acronym expanded at first use, bibliography metadata corrected *from the record fetched in this run*, uncited `\bibitem` removed, template spacing restored, anonymity switch, PDF metadata, spelling, venue style | applied |
-| **B — authorial wording** | changes how strong or how framed a statement is: soften an overclaim in the abstract, qualify a baseline as an optimistic bound, rename a confounded variable ("vehicle" → "dataset"), remove editorial meta-language, define a concept the paper inherited, add an existing limitation to the abstract, cut a figure that adds nothing | applied on the branch, **each one recorded as a `proposed` decision** with the before/after text. The human accepts it with `promote` or reverts it. It must never change a number, add a claim, remove a stated limitation or change the title or authors |
-| **C — needs data or a person** | a new experiment, a re-run, a measurement, a reference not yet verified, the text of a standard, a co-author's figure source, a venue choice, a title | **never applied.** It becomes a todo `t-NNNN` naming what would close it and who can do it |
+| **A — mechanical** | changes no meaning: broken citations and cross-references, build or export errors, layout overflow, a missing figure path, a term or acronym expanded at first use, bibliography fields corrected *from the record fetched in this run*, uncited references removed, template spacing restored, anonymity switches, file metadata, spelling, the venue's house style | applied |
+| **B — authorial wording** | changes how strong or how framed a statement is. Examples: soften an overclaim, qualify a result's scope, rename a confounded variable, remove editorial meta-language, define a concept the paper borrowed, move an existing limitation into the abstract, cut a figure that adds nothing | applied, and **each one recorded as a `proposed` decision** with the before and after text. The human accepts it with `promote` or reverts it. It never changes a number or a quotation, never adds a claim, never removes a stated limitation, never changes the title, the authors or the thesis |
+| **C — needs evidence or a person** | a new experiment, a re-run, more interviews, an archive visit, a missing proof step, a reference not yet verified, a permission, a co-author's source file, a venue or title choice | **never applied.** It becomes a todo `t-NNNN` naming what would close it and who can do it |
 
-Rules for applying:
-- Start from a clean tree, or record what was dirty. Create `virtual-review/<date>` from the
-  current branch. Offer commits per class; do not make them. A commit never carries an AI
-  co-author trailer.
-- If the manuscript lives in a collaborative editor, fetch it first and work on the fetched
-  copy. Pushing back is a separate step the human asks for.
-- When a fix needs a citation, add it only if R4 fetched and verified its record in this run.
+**Rules for applying:**
+- Start from a clean tree, or record what was dirty. For a source under git, create the branch
+  `virtual-review/<date>`; otherwise work on the dated copy (§2, step 7).
+- Offer commits per class; do not make them. A commit never carries an AI co-author trailer.
+- Word and other binary sources: apply edits with tracked changes on, so the human reviews
+  them in the editor they use.
+- When a fix needs a citation, add it only if R4 fetched and verified the record in this run.
   Otherwise the fix is class C.
-- A class B fix that a previous round's human rejected (`rejected` in `reviews/`) is not
-  re-applied. The reason is quoted in the new record instead.
+- Do not re-apply a class B fix that a human rejected in an earlier round. Quote that rejection
+  in the new record instead.
 
 ---
 
-## 6. The domains and their checks
+## 6. The core domains (every article)
 
-Format: **Id · Sev · Fix · Check** — *how*. "lint Hnn" means `review lint` already decides it.
-Type tags: (auto) a script decides it; (semi) the agent locates and judges lightly; (judg)
-expert judgment.
+Each check is listed as **Id · Sev · Fix · Check**, followed by how it is done. "Lint Hnn" means
+`review lint` already decides it. The tags say what a check needs:
+- **(auto)**: a script;
+- **(semi)**: the agent locates, then judges lightly;
+- **(judg)**: expert judgment.
 
 ### P — Pre-flight on the memory (gate)
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| P01 | S0 | C | `venue/` names **one current** target, with the source and date of each rule and a list of what is *not verified*. An old target is marked superseded, not left under a new header. (semi) |
-| P02 | S1 | C | The review regime (open / single / double anonymous) is read from the venue's current call, not carried over from the previous venue. (semi) |
-| P03 | S2 | C | The decisions this version rests on are `accepted`; none is left `proposed`. (auto: `status`) |
-| P04 | S2 | A | `CLAUDE.md`/project notes and `article-docs/` agree on venue, authors and status; where they disagree, the memory is corrected or the divergence is recorded. (semi) |
-| P05 | S1 | C | The deadline is known and not past. Page, abstract and reference limits are recorded as numbers. (semi) |
-| P06 | S2 | C | If this project is a fork of another (v2, resubmission), the record says which one it supersedes, and text reused from it is known (V09). (semi) |
-| P07 | S1 | C | The collaborative editor has no co-author edits newer than the local copy. (semi: `overleaf.md`) |
-| P08 | S3 | C | One published paper from the target venue has been dissected: sections, word counts, number of references, figures, what it does that this paper does not (`venue/exemplar.md`). (judg) |
+| P01 | S0 | C | `venue/` names **one current** target, with the source and date of every rule and a list of what is *not verified*. An old target is marked superseded, not left under a new header. (semi) |
+| P02 | S1 | C | The review regime (open, single or double anonymous) comes from the venue's current call, not carried over from the previous venue. (semi) |
+| P03 | S2 | C | The decisions this version rests on are `accepted`, not left `proposed`. (auto: `status`) |
+| P04 | S2 | A | Project notes and `article-docs/` agree on venue, authors and status. Where they disagree, the memory is corrected or the divergence recorded. (semi) |
+| P05 | S1 | C | The deadline is known and not past, and the length, abstract and reference limits are recorded as numbers. (semi) |
+| P06 | S2 | C | If this project forks another (a v2, a resubmission, a chapter from a thesis), the record says which one, and reused text is known (V09). (semi) |
+| P07 | S1 | C | The shared editor holds no co-author edits newer than the local copy. (semi) |
+| P08 | S3 | C | At least one recently published piece from the target venue, of the same type, has been dissected: structure, length, number of references, figures, what it does that this one does not (`venue/exemplar.md`). (judg) |
 
 ### V — Venue fit and formal compliance (gate)
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| V01 | S0 | B | Page count within the limit, in the venue's class file and options, counted on the PDF. Main body and references/appendix are counted as the venue counts them. (auto: lint `--pages-max`) |
-| V02 | S1 | A | The venue's template is unmodified: no negative `\vspace`, `\linespread`, geometry or float-spacing changes. (auto: lint H08) |
-| V03 | S0 | C | Length is **also not too short** for the venue. One real paper of 5 pages was rejected as "superficial" where the venue's median was 12. (semi) |
-| V04 | S0 | B | Abstract within the word limit; keywords within the count and format the venue requires. (auto: lint `--abstract-max`) |
-| V05 | S0 | B | Mandatory sections present with the venue's exact names: ethics considerations, open science / data availability, LLM-usage statement, author biographies, contact section, conflicts of interest, funding. (semi) |
-| V06 | S1 | A | Required metadata: ORCID for every author where IEEE asks for it, corresponding author, affiliations in the venue's format. (semi) |
-| V07 | S0 | A | Reference style and order as the venue wants (numbered by first citation, alphabetical, author–year). File-format and size limits for the submission (e.g. ≤ 2 MB, DOCX required). (semi) |
-| V08 | S0 | C | **Scope fit.** The type of contribution is one the venue accepts. Examples recorded in projects: a journal of industrial informatics rejects a pure measurement study; a security venue rejects ML robustness work with no adversary. (judg) |
-| V09 | S0 | C | No undisclosed overlap with another submission or publication of the same group, including forks of this project. Plagiarism-checker thresholds (e.g. ≤ 15 %) are respected. (semi) |
-| V10 | S0 | A | No hidden text and no instruction aimed at an LLM reviewer. (auto: lint H17) |
-| V11 | S2 | B | Commercial tone avoided where the venue forbids it (each product named once, no marketing adjectives). (semi) |
+| V01 | S0 | B | Length within the limit, counted the way the venue counts it (pages, words, characters; with or without references, abstract or appendices), in the venue's template. (auto: lint `--pages-max`) |
+| V02 | S1 | A | The template is unmodified: margins, spacing, fonts and styles are as provided. (auto: lint H08 for LaTeX; semi for Word) |
+| V03 | S0 | C | Length is **not too short** either. Real case: 5 pages called "superficial" where the venue's median was 12. (semi) |
+| V04 | S0 | B | Abstract within the limit, and in the required form (structured or not). Keywords in the required count and vocabulary (MeSH, ACM CCS, JEL, MSC). (auto: lint `--abstract-max`) |
+| V05 | S0 | B | The required structure and statements are present under the venue's exact names. Typical items: IMRaD or the venue's section scheme, a data-availability statement, ethics and consent, conflicts of interest, funding, author contributions (CRediT), an AI-use statement, an open-science or artifact section, an ethics-considerations section, author biographies, a contact section. (semi) |
+| V06 | S1 | A | Author metadata as required: ORCID iDs, affiliations, corresponding author. (semi) |
+| V07 | S0 | A | Reference style and order as the venue wants (numbered, author–date, notes-bibliography). File format, size and naming as the submission system demands. (semi) |
+| V08 | S0 | C | **Scope and article type fit.** The venue publishes this kind of piece in this subject. Real cases: a journal rejecting a pure measurement study for lacking the contribution type it publishes; a review sent where only original research is accepted. (judg) |
+| V09 | S0 | C | No undisclosed overlap with another submission or publication, including the authors' own, theses and preprints, where the venue restricts them. Similarity-check thresholds are respected. (semi) |
+| V10 | S0 | A | No hidden text and no instruction aimed at an automated or LLM reviewer. (auto: lint H17) |
+| V11 | S2 | B | Tone matches the venue: no promotional language, products named neutrally, no advocacy where the venue expects analysis. (semi) |
+| V12 | S2 | C | The language requirement is met (language of the text, of the abstract, a second-language abstract, translation of quotations). (semi) |
 
-### H — Build and document hygiene (gate)
-
-| Id | Sev | Fix | Check |
-|---|---|---|---|
-| H01 | S0 | A/C | No placeholder survives: `TODO`, `TBD`, `\todo`, `\tbd`, `\PH{}`, `\phn`, `\hl`, red markup, "to be done", "Scopus still to be searched". A placeholder standing for an **unmeasured number** is class C, never "filled". One real submission went out with `\tbd` in the abstract and was desk-rejected. (auto) |
-| H02 | S0 | A | Build log clean: no undefined citation or reference, no missing file, no fatal error; the log is newer than the sources. Overfull boxes are S2. (auto) |
-| H03 | S0 | A | The rendered PDF has no `[?]`, no `??`, no visible TODO, and is newer than the sources. (auto) |
-| H04 | S0 | A | Every cited key is in the bibliography. Every `\bibitem` is cited in the text: a reference list longer than the citations reads as padding, and one venue rejected a paper for it. (auto) |
-| H05 | S3 | A | Every figure and table is referenced in the text and its file exists. (auto) |
-| H06 | S1 | B | No editorial meta-language: "in response to review", "previous round", "reviewers pointed out", "not available to the authors". That belongs in the response letter. (auto) |
-| H13 | S0 | C | No credential in the manuscript or the memory. If one is found, remove it and rotate it, because it is already in git history. (auto) |
-| H14 | S1 | A | All fonts embedded, no Type 3 bitmap fonts, PDF not encrypted, metadata correct for the review regime. (auto) |
-| H18 | S2 | A | Built from a clean checkout: no uncommitted figure, no file only on one machine, no test PDFs or `remove-before-submission/` folders in the source package. (semi) |
-
-### R — References and citation integrity (gate)
+### H — Document hygiene (gate)
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| R01 | S0 | A/C | **Every** entry exists: title, authors, year and venue match Crossref, DBLP, arXiv or the publisher. Checked on 100 % of entries, not a sample. Invented co-authors, wrong titles and nonexistent papers were found in real projects. A wrong field is corrected from the record (A); an entry that cannot be found is removed together with its claim, or kept as a todo (C). (semi: `bib-verify-entries`) |
-| R02 | S1 | A | Every DOI resolves and resolves to *this* work. A preprint with a published version is cited as the published version. (semi) |
+| H01 | S0 | A/C | No placeholder survives: `TODO`, `TBD`, `XXX`, `\todo`, `\tbd`, highlighted or red text, "[ref]", "[citation needed]", "to be done", "Scopus still to be searched". A placeholder that stands for **missing evidence** is class C, never "filled". Real case: a submission went out with a placeholder in the abstract and was desk-rejected. (auto) |
+| H02 | S0 | A | The build or export is clean: no undefined citation or cross-reference, no missing file, no fatal error, and it is newer than the source. (auto for LaTeX) |
+| H03 | S0 | A | The rendered PDF has no `[?]`, `??`, "Error! Reference source not found", "Error! Bookmark not defined", unresolved field codes, or visible TODO. (auto) |
+| H04 | S0 | A | Every citation resolves to an entry, and every entry is cited in the text. One venue rejected a paper for references "listed but not cited". (auto for LaTeX; semi otherwise) |
+| H05 | S3 | A | Every figure and table is referred to in the text, numbered in order, and present. (auto for LaTeX) |
+| H06 | S1 | B | No editorial meta-language: "in response to review", "previous round", "as the reviewers asked", "not available to the authors". It belongs in the response letter. (auto) |
+| H13 | S0 | C | No credential or personal data in the document, its metadata or its materials. If found, remove it, and rotate a credential, because it is already in history. (auto) |
+| H14 | S1 | A | The PDF embeds its fonts, has no bitmap fonts, is not encrypted, and its metadata suits the review regime. (auto) |
+| H18 | S2 | A | Clean source package: no tracked changes or comments left in a Word file, no stray drafts, test files or "remove-before-submission" folders, no file present only on one machine. (semi) |
+
+### R — References and source integrity (gate)
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| R01 | S0 | A/C | **Every** reference exists, and its authors, title, year and venue or publisher match the record (Crossref, DataCite, DBLP, PubMed, a library catalogue, the publisher, the archive). Check 100 % of entries, not a sample. Agent-drafted bibliographies in real projects contained invented co-authors, wrong titles and nonexistent works. A wrong field is fixed from the record (A); an entry that cannot be found is removed together with its claim, or becomes a todo (C). (semi: `bib-verify-entries`) |
+| R02 | S1 | A | Every DOI or persistent identifier resolves to *this* work. A preprint with a published version is cited as published. Editions and translations are the ones actually used. (semi) |
 | R03 | S1 | C | No cited work is retracted or under an expression of concern without the paper saying so. (semi: `citation-retraction-check`) |
-| R04 | S1 | B | **The source says what the sentence says.** Numbers attributed to a reference come from that reference and not from a neighbouring one. A criterion is reported in the direction the source states it. A study is described as the kind of study it is. Every sentence that attributes a number or a finding to a citation is checked against the cited text. (judg: `citation-context-check`) |
-| R05 | S1 | C | Every claim of a gap ("no prior work", "the first") survived a dated search of the literature named in the record. Real case: a reviewer pointed to the post-quantum secure-boot protocols the paper said did not exist. (judg: `lit-search-*`) |
-| R06 | S1 | C | Paragraphs that assert facts carry citations. Quantitative claims about risk, cost or prevalence cite a source, or come from the paper's own data. (semi) |
-| R07 | S2 | C | Foundational definitions cite their origin. Example: a paper titled on "forensic readiness" cites who defined forensic readiness. (judg) |
-| R08 | S2 | C | No low-credibility or predatory venue among the references that carry an argument. (semi) |
-| R09 | S2 | C | Self-citation is pertinent and not excessive. Under anonymous review it is in the third person (E02). (semi) |
-| R10 | S1 | C | Standards are cited by the right clause, checked against the official table of contents. Real case: an IDS cited to the validation clause instead of the monitoring clause. (semi) |
-| R11 | S2 | C | URLs to tools, datasets and standards are live and have an access date. A mutable web page is not a primary source where the venue forbids it. (semi; lint lists the URLs) |
-| R12 | S0 | C | The paper is **self-contained**. No concept, taxonomy, metric or scenario it needs is defined only in an unpublished, "in press" or inaccessible work. It is defined operationally here. (judg) |
+| R04 | S1 | B | **The source says what the sentence says.** Numbers, findings and positions are attributed to the work that contains them; a criterion is reported as the source states it; a study is described as the kind of study it is; a quotation is verbatim, with its page. Every sentence that attributes something specific to a citation is checked against the cited text. (judg: `citation-context-check`) |
+| R05 | S1 | C | Every claim of a gap ("no prior work", "the first", "has been neglected") survived a dated search recorded in the memory. Real case: a reviewer pointed to work the paper said did not exist. (judg) |
+| R06 | S1 | C | Factual assertions carry citations. Quantitative claims (prevalence, cost, risk, dates) cite a source or the paper's own data. (semi) |
+| R07 | S2 | C | Foundational concepts cite their origin, and the canonical works of the debate are present. (judg) |
+| R08 | S2 | C | No predatory or low-credibility outlet carries an argument; grey literature is identified as such. (semi) |
+| R09 | S2 | C | Self-citation is pertinent and not excessive. Under anonymous review it is written in the third person (E02). (semi) |
+| R10 | S1 | C | Laws, standards, regulations, guidelines and canonical texts are cited by the correct article, clause, section or verse, against the official text. (semi) |
+| R11 | S2 | C | Web sources have an access date, or an archived copy for mutable pages. (semi; lint lists URLs) |
+| R12 | S0 | C | **The paper is self-contained.** No concept, taxonomy, instrument or scenario it needs is defined only in an unpublished, "in press" or inaccessible work; it is defined operationally here. (judg) |
 
 ### K — Contribution, claims and novelty
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| K01 | S1 | B | The problem, objective or research questions are explicit in the introduction. Each RQ can fail: an RQ answered "yes" by construction is reframed as *how well* or *within what limits*. (semi) |
-| K02 | S1 | B/C | Contributions are numbered, specific, falsifiable, and each points to the section that supports it. A contribution with no section of evidence is cut or supported. (semi) |
-| K03 | S1 | C | **Novelty is demonstrated, not asserted.** A table compares the closest works dimension by dimension, and the text states the delta. "We integrate known practices" needs exactly this. (judg) |
-| K04 | S1 | C | Direct competitors discussed in the text appear in the comparison table and are cited. (semi) |
-| K05 | S1 | B | **Evidence is proportional to the claim.** The component named in the title or the first contribution is evaluated experimentally, not illustrated. A broad framework needs integrated evidence, not a mosaic. Otherwise the framing narrows to what was measured. This was the reason for a real desk reject. (judg) |
-| K06 | S1 | B | The title promises only what the paper delivers: no "measurement-based" without measurements, no "systematic review" without a finished systematic review (SR01). (judg) |
-| K07 | S1 | B | Abstract, introduction and conclusion state each result at the strength the results section supports. No headline rests on the weakest part of the setup. (judg: `claim-evidence-audit`) |
-| K08 | S2 | B | Strong words ("first", "novel", "state of the art", "significantly", "guarantees", "outperforms") are each backed by a result, a citation or a test. (auto hint: lint H11) |
-| K09 | S2 | C | Adjectives that carry the argument are quantified: "low-cost" has a cost, "negligible" has a ratio to the budget, "real-time" has a deadline. (semi) |
-| K10 | S2 | B | A reference architecture or framework comes with a proof of concept or an evaluation, or is framed explicitly as a proposal. (judg) |
-| K11 | S2 | B | Open problems the paper raises come with at least a concrete direction. (judg) |
-| K12 | S2 | B | Fashionable topics appear only where they belong. Real case: a post-quantum paragraph in a paper about isolation was "out of context" to the expert. (judg) |
-| K13 | S3 | — | The reviewer can state the paper's **strengths to protect**: honest limitations, the clean artifact, the precise scope. They are listed in the report so that no later fix erodes them. (judg) |
+| K01 | S1 | B | The question, aim, thesis or hypothesis is explicit near the start. A research question that can only be answered "yes" is reframed as *how*, *how well* or *under what conditions*. (semi) |
+| K02 | S1 | B/C | Contributions are stated, specific, and each points to where the paper supports it. A contribution with no support is cut or supported. (semi) |
+| K03 | S1 | C | **Novelty is demonstrated, not asserted.** The paper names its closest predecessors and states the difference: in a comparison table for technical work, in a positioned literature discussion for other work. "We combine known practices" needs exactly this. (judg) |
+| K04 | S1 | C | The works and positions the paper discusses are the ones a field expert would expect, and the direct competitors are among them. (judg) |
+| K05 | S1 | B | **Evidence is proportional to the claim.** The element named in the title or the first contribution is the best-supported one. A broad framework, theory or interpretation needs correspondingly broad support. Otherwise the framing narrows to what was shown. This was the reason for a real desk reject. (judg) |
+| K06 | S1 | B | The title promises only what the paper delivers. "Systematic review" means a finished systematic review; "measurement-based" means measurements; "a theory of" means a theory. (judg) |
+| K07 | S1 | B | Abstract, introduction and conclusion state each finding at the strength the body supports. No headline rests on the weakest part of the work. (judg: `claim-evidence-audit`) |
+| K08 | S2 | B | Strong words ("first", "novel", "significant", "proves", "always", "unprecedented") are backed by a result, a citation or a test. (auto hint: lint H11) |
+| K09 | S2 | C | Load-bearing adjectives are quantified or defined: "low-cost", "negligible", "widespread", "representative". (semi) |
+| K10 | S2 | B | A proposed framework, model or architecture comes with a demonstration or an evaluation, or is explicitly framed as a proposal. (judg) |
+| K11 | S2 | B | Open problems the paper raises come with at least one concrete direction. (judg) |
+| K12 | S2 | B | Fashionable topics appear only where they do work in the argument. Real case: a paragraph on a trending technique was "out of context" to the expert. (judg) |
+| K13 | S3 | — | The **strengths to protect** are listed: honest limitations, a precise scope, a clean dataset, a careful reading. No fix may erode them. (judg) |
 
-### M — Method, validity and statistics
+### M — Method and validity (paradigm-aware)
 
-| Id | Sev | Fix | Check |
-|---|---|---|---|
-| M01 | S1 | B | The method is named (experiment, case study, benchmark, simulation, design science, systematic review) and fits the question. (semi) |
-| M02 | S1 | C | Data collection and analysis are described well enough to replicate. For a synthetic testbed this covers traffic generation, attack execution, randomization, seeds and the construction of ground truth. (judg) |
-| M03 | S1 | B/C | **Results that are true by construction are not evidence.** Differences the design guarantees are separated from those it does not, and only the latter are claimed. (judg) |
-| M04 | S1 | B | Confirmatory and exploratory analyses are separated. An analysis added after the confirmatory runs, written with knowledge of the testbed, is labelled exploratory and does not carry the headline. (judg) |
-| M05 | S1 | C | Pre-registration claims ("predictions recorded before the runs") have dated proof, such as a commit or a timestamped file. (semi) |
-| M06 | S0 | B | **The method is described in the past tense only if it was executed.** A step that has not run is written as planned, or the paper waits. (judg) |
-| M07 | S1 | B/C | **Confounds.** The variable the text names (vehicle, platform, attack) can be isolated by the design. Otherwise the text names what was actually varied, such as the dataset, and lists the confounds. (judg) |
-| M08 | S1 | C | Simplifications of the testbed that favour the result (a fixed IP per account, a single seed, attacks repeated on the training ID) are discussed. The result is presented as an optimistic bound where they apply. (judg) |
-| M09 | S1 | C | Stochastic methods run several times, with the number of runs and the seeds stated. A single sample is not quoted to six decimals as a property of the system. (semi) |
-| M10 | S2 | A/C | Every mean or median has its dispersion, and the caption says which dispersion it is (SD, SE, IQR, CI). The value is recomputed from the per-run data where it exists (A); otherwise C. (semi) |
-| M11 | S2 | C | Claimed differences have a test suited to the design, an effect size with a CI, a correction for multiple comparisons, and checked assumptions. (semi: `stats-sanity-check`) |
-| M12 | S2 | B | Summary statistics fit the data: a geometric mean for normalized ratios, no "up to X %" when the distribution is 4/6/7/49 %. Precision is no finer than the error. (semi) |
-| M13 | S1 | B/C | Threats to validity cover construct, internal, external and conclusion validity. Each is tied to this design with a mitigation; a boilerplate list does not count. (judg: `validity-threats-sweep`) |
-| M14 | S2 | B | Deviations between plan and execution are reported. (semi) |
-| M15 | S2 | C | Sensitivity of the conclusions to key parameters (thresholds, window sizes, timeouts) is shown or bounded. (judg) |
-| M16 | S1 | C | **Too good to be true is audited.** For 100 %, F1 = 1.000, zero misses or improvements of three orders of magnitude, check leakage, in-sample evaluation, separability by construction and a weakened baseline before the number stays. Lint H16 lists the candidates. (judg) |
-| M17 | S2 | B | Absolute numbers that belong to the host are reported as ratios that survive another machine. Example: 0.9 % of the message period, rather than "below 0.1 ms". (judg) |
-| M18 | S2 | B/C | Alternative explanations of the main result are discussed. (judg) |
-
-### X — Evidence, numbers and artifacts
+The type pack (§7) adds the detailed standard. These checks hold for every paradigm.
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| X01 | S0 | C | **Every number traces.** Each number in the paper names the file and key (or script and command) that produces it. A number no current script reproduces is either reproduced or removed. A figure drawn from data that does not exist is S0. (semi: `numbers-traceability`) |
-| X02 | S1 | C | Key results are **re-run** where the environment allows. Real projects found wrong counts and a false latency bound only on re-running, never by reading. (semi) |
-| X03 | S1 | A | Counts are counts: "19 experiments" read off the highest experiment number while 14 exist is the canonical error. The same column never mixes two definitions (unique IDs versus simulated ECU IDs). (semi) |
-| X04 | S1 | B | **Denominators are explicit.** A metric computed on a subset is not placed next to the size of the whole corpus as if it covered it. Reviewers read that juxtaposition as dishonesty, not imprecision. (judg) |
-| X05 | S1 | C | The public artifact matches the submitted manuscript. Its tag or commit is the one the paper cites, every script the paper names exists in it, and the version numbers agree. (semi) |
-| X06 | S1 | C | The artifact link resolves without the authors' session and has a DOI pinned to a version (Zenodo or similar). Under anonymous review it is an anonymized mirror that stays in sync (E03). (semi) |
-| X07 | S2 | C | The artifact README maps each table and figure to a command and an expected run time. Reproduction comes in tiers: regenerate from saved results in minutes, recompute from datasets, run on hardware (optional). Dependencies are pinned and there is one entry point. (semi) |
-| X08 | S1 | C | No secret, internal URL, personal path or AI co-author trailer in the artifact or its history (lint H13, H19). An artifact already cited by a submission is archived, never deleted. (auto + semi) |
-| X09 | S2 | C | Reproducibility metadata survived page cuts: interpreter and library versions, seeds and schedules. Diff against the previous version for what the compression removed. (semi) |
-| X10 | S2 | C | Hardware-dependent results offer recorded traces or an emulation mode, so an evaluator can check them without the board. (semi) |
+| M01 | S1 | B | The approach is named: experiment, survey, observational study, interviews, ethnography, case study, simulation, design and evaluation, proof, archival or textual analysis, review, or argument. It fits the question. (semi) |
+| M02 | S1 | C | The procedure is described well enough for a peer to replicate or audit it. That means the protocol (quantitative), the procedures and analytic process (qualitative), the assumptions and definitions (theoretical), the corpus and how it was read (textual or historical), or the search (review). (judg) |
+| M03 | S1 | B/C | **Nothing is true by construction or by assumption.** No result that the design guarantees, and no conclusion contained in its premises, is offered as a finding. (judg) |
+| M04 | S1 | B | Planned and post-hoc work are told apart. An analysis, a theme or a case chosen after seeing the material is labelled exploratory and does not carry the headline. (judg) |
+| M05 | S1 | C | Claims of pre-registration, a protocol or a prior plan have dated proof (a registry entry, a commit, a timestamped file). (semi) |
+| M06 | S0 | B | **The method is described as done only if it was done.** An unexecuted step is written as planned, or the paper waits. (judg) |
+| M07 | S1 | B/C | **Rival explanations and confounds.** The factor the text credits can be isolated by the design. Otherwise the text names what actually varied, and discusses the alternatives. (judg) |
+| M08 | S1 | C | The limits of the setting are discussed: a laboratory, a synthetic testbed, a convenience sample, one archive, one institution, a selected corpus. Results are scoped to them, or presented as an upper or lower bound where that applies. (judg) |
+| M09 | S1 | B/C | Limitations or threats to validity are specific to this design, each with its consequence and any mitigation. Use the paradigm's own terms: validity for quantitative work; trustworthiness for qualitative work; scope conditions for theory. A boilerplate list does not count. (judg: `validity-threats-sweep`) |
+| M10 | S2 | B | Deviations between plan and execution are reported. (semi) |
+| M11 | S1 | C | **Too good to be true is audited.** A perfect score, a unanimous sample, a flawless fit or an effect far larger than the literature reports gets a check for leakage, selection, circularity or error before it stays. Lint H16 lists numeric candidates. (judg) |
+| M12 | S2 | B/C | The conclusions follow from the results and answer the question asked. (judg) |
+
+### X — Evidence and materials
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| X01 | S0 | C | **Every number, quotation and specific fact traces** to its source: a data file and its key, a script, a transcript and line, an archive and folio, a proof and lemma. A figure or table with no source behind it is S0. (semi: `numbers-traceability`) |
+| X02 | S1 | C | Key results are **re-derived** where possible: the code re-run, the statistics recomputed, the proof re-checked, the quotation re-read in the source. In real projects, re-running found wrong counts and a false bound that reading had missed. (semi) |
+| X03 | S1 | A | Counts are counts. "19 experiments" read off the highest experiment number while 14 exist is the canonical error. A column or category never mixes two definitions. (semi) |
+| X04 | S1 | B | **Denominators are explicit.** A result computed on a subset is not placed beside the size of the whole as if it covered it. Reviewers read that as dishonesty, not imprecision. (judg) |
+| X05 | S1 | C | The materials the paper points to match the submitted version: the cited version, tag or deposit, every named file present, versions agreeing. (semi) |
+| X06 | S1 | C | Materials are available as the venue and field expect: data, code, instruments, interview guides, codebooks, protocols, supplementary files. They are reachable without the authors' login and carry persistent identifiers. Where they cannot be shared (privacy, consent, licence, IP, security), the paper says why and what access exists. (semi) |
+| X07 | S2 | C | Supplementary materials are usable: a README that maps each result to its file or command, pinned versions, one entry point. (semi) |
+| X08 | S1 | C | Materials leak nothing: no personal data beyond what consent allows, no credentials, no internal paths, no AI co-author trailers (lint H13, H19). Material already cited by a submission is archived, never deleted. (semi) |
+| X09 | S2 | C | Method details and provenance survived cuts for length. Diff against the previous version for what was removed. (semi) |
+| X10 | S2 | C | Translations of quotations are attributed (the authors' or a published translation), and the original is available where it matters. (semi) |
 
 ### W — Writing, presentation and figures
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| W01 | S2 | B | A reader gets the **three or four main points** from the abstract without effort: no long sentences packed with numbers and qualifiers. (judg) |
-| W02 | S3 | A | Every acronym is defined at first use, in the text and before its first float. (auto hint: lint H09) |
-| W03 | S3 | A | Terms and notation are consistent; every symbol is defined before use. (semi) |
-| W04 | S1 | B | **It does not read as unsupervised AI output.** The text uses specific examples, makes the authors' own judgments, compares rather than lists, and gives no generic survey paragraphs. In one real review this impression alone produced the decisive Strong Reject. (judg; `tortured-phrase-screen` as a hint) |
-| W05 | S2 | B | No self-defeating sentence: a limitation is justified by scope, not by circumstance ("the standard was not available to us"). (auto hint: lint H06) |
-| W06 | S2 | B | Each figure earns its space. A box diagram that repeats a sentence is cut, and the space goes to definitions and method details. (judg) |
-| W07 | S2 | A/C | Figures are vector, legible in greyscale, colour-blind safe, with fonts of at least 7 pt at print size. Axes are labelled with units, and truncated axes and log scales are marked. A raster replacing a vector source is fixed with the source (C). (semi) |
-| W08 | S3 | A | Captions are self-contained: what is measured, *n*, and what the error bars are. (semi) |
-| W09 | S3 | A | Language: grammar, US/UK consistency, the venue's style (serial comma, en dashes, number formatting). Changes here must leave the number set identical (§2, step 7). (semi: `language-pass`) |
+| W01 | S2 | B | A reader gets the **main points** from the abstract and introduction without effort, with no sentences overloaded with numbers or qualifiers. (judg) |
+| W02 | S3 | A | Terms and acronyms are defined at first use, including before their first table or figure. (auto hint: lint H09) |
+| W03 | S3 | A | Terminology and notation are consistent throughout. (semi) |
+| W04 | S1 | B | **The text does not read as unsupervised AI output.** It gives specific examples, makes the authors' own judgments, compares rather than lists, and avoids generic paragraphs. In one real review this impression alone produced the decisive Strong Reject. (judg; `tortured-phrase-screen` gives hints) |
+| W05 | S2 | B | No self-defeating sentence: a limitation is justified by scope, not by circumstance ("we could not obtain the text"). (auto hint: lint H06) |
+| W06 | S2 | B | Each figure, table and long quotation earns its space. Material that repeats a sentence is cut, and the space goes where the method or argument needs it. (judg) |
+| W07 | S2 | A/C | Figures are legible at print size and in greyscale, colour-blind safe, labelled with units, and honest in scale. Images keep the resolution the venue requires, and reproduced images have permission (E10). (semi) |
+| W08 | S3 | A | Captions are self-contained: what is shown, the sample, what the error bars or symbols mean. (semi) |
+| W09 | S3 | A | Language and house style: grammar, a consistent variety of English (or the venue's language), number and date formats, the venue's citation style. Changes here leave the content regression identical (§2, step 8). (semi: `language-pass`) |
 
-### E — Ethics, anonymity and AI policy (gate)
+### E — Ethics, integrity, anonymity and AI policy (gate)
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| E01 | S0 | A | Under anonymous review: no name, affiliation, funder, acknowledgment, identifying URL or PDF metadata (lint H07, H14). The anonymity switch is a single macro (`\anontrue`). (auto) |
-| E02 | S0 | B | Under anonymous review, the paper does not say "our previous work [x]". It cites in the third person or blinds the reference. (auto) |
-| E03 | S0 | A | Under a **non**-anonymous regime the paper is not anonymized out of habit from the last venue, and the code-availability note carries the real URL. (semi) |
-| E04 | S0 | A | No AI system is an author or co-author, anywhere: paper, artifact, commit trailers. (auto: lint H19) |
-| E05 | S1 | B | AI use is disclosed **where this venue requires it**, at the level it was actually used. Code generation is not "language editing". Examples: IEEE puts it in the Acknowledgments; other venues use a dedicated section. Never remove a disclosure that an earlier submission already carried. (semi: `ai-use-disclosure`) |
-| E06 | S1 | C | AI-generated or AI-edited figures are declared in the caption. No primary data image is AI-generated. (semi) |
-| E07 | S0 | C | Studies with people have ethics approval (IRB/CEP) stated without breaking anonymity, plus consent and PII protection. (semi) |
-| E08 | S0 | C | Vulnerabilities found were disclosed to the vendor, or a disclosure plan is stated where the venue requires one. No CVE id appears where the venue forbids it before disclosure (lint H12). (semi) |
-| E09 | S1 | B | The ethics section exists in the venue's format where it is mandatory: stakeholders, harms, mitigations, the decision to publish. (semi) |
+| E01 | S0 | A | Under anonymous review: no names, affiliations, funders, acknowledgments, identifying links, or document metadata (lint H07, H14). (auto) |
+| E02 | S0 | B | Under anonymous review, the authors' own work is cited in the third person or blinded, never "our previous work". (auto) |
+| E03 | S0 | A | Under a non-anonymous regime, the paper is not left anonymized from a previous venue. The availability statements carry the real links. (semi) |
+| E04 | S0 | A | No AI system is an author or co-author anywhere: the paper, the materials, the commit history. (auto: lint H19) |
+| E05 | S1 | B | AI use is disclosed where and as the venue requires, at the level it was actually used: drafting is not "language editing". A disclosure that an earlier submission carried is never removed. (semi: `ai-use-disclosure`) |
+| E06 | S1 | C | AI-generated or AI-altered images are declared. No image that is itself data is generated or manipulated beyond what the venue's image-integrity policy allows. (semi) |
+| E07 | S0 | C | Research with people or animals states its ethics approval, consent and data protection without breaking anonymity. Examples: IRB, CEP/CONEP, a REC, an animal-ethics committee. (semi) |
+| E08 | S0 | C | Authorship follows the venue's criteria (e.g. ICMJE); contributions are stated where required; conflicts of interest and funding are declared and true. (semi) |
+| E09 | S0 | C | No plagiarism, duplicate publication or salami-slicing. Text reused from the authors' own work is disclosed where the venue requires. (semi) |
+| E10 | S1 | C | Permission is held for reproduced figures, long quotations, images of people, and copyrighted or licensed material. (semi) |
+| E11 | S1 | C | Harm is considered where it can occur: vulnerable groups, sensitive locations, dual-use findings, security vulnerabilities (disclosed to whoever can fix them before publication). (semi) |
 
 ---
 
-## 7. Domain packs
+## 7. Type packs — what the article *is*
 
-Activated by the article type recorded in `venue/` or `ARTICLE-MEMORY.md`, or detected from the
-text. Several packs can apply to one paper.
+Pick every type that applies. Its verdict joins the overall verdict (§4).
 
-### SR — Systematic reviews and mapping studies (PRISMA 2020, PRISMA-S, Kitchenham, Petersen)
-
-| Id | Sev | Fix | Check |
-|---|---|---|---|
-| SR01 | S0 | B | A paper calls itself a systematic review only if the review is **finished**: screening complete, every database searched, every RQ answered with numbers and synthesis. Otherwise it is retitled, for example to "literature-grounded architecture". This was a real instant reject. (semi) |
-| SR02 | S1 | C | The protocol is defined a priori and made available, and deviations are reported. (semi) |
-| SR03 | S1 | C | The full search string for each database is given, with the platform, the date, limits and filters. (auto: grep the text) |
-| SR04 | S1 | C | Inclusion and exclusion criteria are explicit and operational. (semi) |
-| SR05 | S1 | C | Screening and extraction are done by **two or more independent reviewers** with an agreement measure (κ) and conflict resolution. A single screener is justified as a limitation, and an LLM used as a second screener is declared with its divergence rate. (semi) |
-| SR06 | S2 | A | A PRISMA flow diagram is present and its numbers add up at each stage. (auto: arithmetic) |
-| SR07 | S2 | C | Snowballing and other complementary methods are done; the search is validated against a known set. (semi) |
-| SR08 | S2 | C | The quality or risk of bias of the primary studies is assessed with an instrument chosen a priori. Venue rank is not a proxy. (semi) |
-| SR09 | S1 | C | The synthesis is real: a framework, a classification, or a meta-analysis where it fits. A list of studies with a sentence each is not a synthesis. (judg) |
-| SR10 | S2 | C | The supplementary package is available: protocol, strings, screening results, extraction sheet, scripts. (semi) |
-
-### ML — Machine learning (NeurIPS checklist, REFORMS, Pineau, Arp et al.)
+### QN — Quantitative empirical
+Experiments, quasi-experiments, observational studies, surveys, measurements, benchmarks,
+simulations. Reporting guidelines are on the EQUATOR Network; empirical-standards references
+are the ACM SIGSOFT Empirical Standards and the APA JARS.
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| ML01 | S1 | C | **No leakage:** no preprocessing or feature selection fitted on the test set, no duplicates across splits, no temporal leakage, no in-sample "held-out" set. Real case: an F1 of 1.000 reported as held-out was a training-set fit. (judg) |
-| ML02 | S1 | C | The dataset is described: statistics, splits, exclusions, prevalence, origin. The choice is motivated. (semi) |
-| ML03 | S1 | C | Baselines are fair: the same tuning budget, including simple non-ML baselines, and no baseline reduced until it loses ("strawman"). (judg) |
-| ML04 | S2 | C | Hyperparameters: the range searched, the selection method (not on the test set), the final values per model. (semi) |
-| ML05 | S2 | B | Metrics suit the problem: imbalance, cost of false positives, base-rate fallacy. F1 is not compared across prevalences. (judg) |
-| ML06 | S2 | C | Number of training and evaluation runs, the seeding method, compute used. (semi) |
-| ML07 | S2 | C | Generalization and distribution shift are discussed. Evaluation on unseen captures is not optional. (judg) |
-| ML08 | S1 | B | An LLM used as part of the method is declared: model, version, prompts, date. (semi) |
-| ML09 | S2 | C | New datasets or models come with a datasheet or model card and a license. (semi) |
+| QN01 | S1 | C | Variables, measures and instruments are defined, with their validity and reliability where they are constructs. (semi) |
+| QN02 | S1 | C | The sample size is justified (power, precision, or a stated constraint). The sampling frame and the recruitment are described. (semi) |
+| QN03 | S1 | C | Randomness and replication: stochastic procedures are repeated, the number of runs and the seeds are stated, and no single sample is quoted as a property of the system. (semi) |
+| QN04 | S2 | A/C | Every estimate has its uncertainty (SD, SE, CI, IQR), and the paper says which. Values are recomputed from per-unit data where it exists (A); otherwise the fix is C. (semi) |
+| QN05 | S2 | C | Tests suit the design and the data; their assumptions are checked; effect sizes come with intervals; multiple comparisons are corrected. (semi: `stats-sanity-check`) |
+| QN06 | S2 | C | Missing data, exclusions and outliers are reported, with how they were handled. (semi) |
+| QN07 | S1 | C | Baselines and comparison groups are fair and equally treated: the same tuning effort, configuration and measurement. (judg) |
+| QN08 | S2 | B | Summaries fit the data: no "up to X %" that hides the distribution; precision no finer than the error; ratios reported where absolute values belong to one machine or one setting. (semi) |
+| QN09 | S2 | C | Sensitivity of the conclusions to key choices (thresholds, windows, model specification) is shown or bounded. (judg) |
+| QN10 | S2 | C | For simulations: the model is described, verified and validated, and its parameters are justified. (semi) |
 
-### SC — Security (USENIX/S&P/NDSS/CCS calls, Carlini et al., Arp et al.)
+### QL — Qualitative
+Interviews, focus groups, ethnography, document analysis, grounded theory, phenomenology,
+discourse analysis. References: SRQR, COREQ.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| QL01 | S1 | C | The paradigm and approach are named and fit the question (e.g. thematic analysis, grounded theory, IPA). (semi) |
+| QL02 | S1 | C | Sampling is purposive and justified. Participant characteristics are given. The point of stopping (saturation, information power) is argued. (semi) |
+| QL03 | S1 | C | Data collection is described: guide, setting, duration, recording, transcription, language and translation. (semi) |
+| QL04 | S1 | C | The analysis is traceable: who coded, how codes became themes, the codebook or an example of the chain. (semi) |
+| QL05 | S1 | B/C | Trustworthiness is addressed (credibility, transferability, dependability, confirmability), for instance through triangulation, member checking, peer debriefing or an audit trail. (judg) |
+| QL06 | S1 | B | The researchers' reflexivity is stated: position, relationship to participants, and how it may shape the reading. (semi) |
+| QL07 | S1 | B | Quotations support the themes they illustrate, come from a spread of participants, and are not chosen only for eloquence. Counter-cases are discussed. (judg) |
+| QL08 | S0 | C | Participants cannot be re-identified from quotations or descriptions beyond what consent allows. (semi) |
+
+### MX — Mixed methods
+Reference: GRAMMS.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| MX01 | S1 | C | The reason for mixing is stated, together with the design (convergent, explanatory or exploratory sequential). (semi) |
+| MX02 | S1 | C | Integration is shown where it happens (joint display, linked analysis), not just two studies side by side. (judg) |
+| MX03 | S2 | C | Each strand meets its own standard (QN, QL). (semi) |
+
+### RV — Reviews
+Systematic reviews, scoping reviews, rapid reviews, meta-analyses, umbrella reviews, mapping
+studies and narrative reviews. References: PRISMA 2020, PRISMA-S, PRISMA-ScR, MOOSE,
+Kitchenham & Charters, Petersen et al., GRADE.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| RV01 | S0 | B | A paper calls itself "systematic" or "scoping" only if the process is **finished**: every database searched, screening complete, every question answered with synthesis. Otherwise it is retitled (e.g. "a narrative review", "a literature-grounded framework"). Real case: an instant reject. (semi) |
+| RV02 | S1 | C | The protocol is defined a priori, registered or available (PROSPERO, OSF), and deviations are reported. (semi) |
+| RV03 | S1 | C | The full search for each source is given: the string, the platform, the date, limits and filters. (auto: grep) |
+| RV04 | S1 | C | Inclusion and exclusion criteria are explicit and operational. (semi) |
+| RV05 | S1 | C | Screening and extraction are done by **two or more independent reviewers**, with agreement (κ) and conflict resolution. A single screener, or an LLM used as a screener, is declared with its error or divergence rate. (semi) |
+| RV06 | S2 | A | A flow diagram is present and its numbers add up at every stage. (auto: arithmetic) |
+| RV07 | S2 | C | Complementary methods are used (snowballing, hand search, grey literature), and the search is validated against a known set. (semi) |
+| RV08 | S2 | C | Risk of bias or quality is appraised with an instrument chosen a priori; venue prestige is not a proxy. (semi) |
+| RV09 | S1 | C | The synthesis is real: a framework, a classification, a meta-analysis or a narrative synthesis with explicit method. A study-by-study list is not one. (judg) |
+| RV10 | S2 | C | Meta-analysis: the model choice, heterogeneity, sensitivity analyses, small-study effects and certainty of evidence (GRADE) are reported. (semi) |
+| RV11 | S2 | B | Narrative review: the scope and how sources were chosen are stated honestly, and no systematic claim is made. (semi) |
+| RV12 | S2 | C | Supplementary package: the protocol, the search strings, the screening decisions, the extraction sheet. (semi) |
+
+### TH — Theoretical, mathematical and formal
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| TH01 | S1 | B | Every theorem, proposition or model is stated precisely, with all its assumptions explicit and in one place. (semi) |
+| TH02 | S0 | C | Proofs are complete. Every step is justified, and "it is easy to see" hides nothing that a referee would need to check. Each gap is a finding at the severity of the result it supports. (judg) |
+| TH03 | S1 | C | The result is placed against known results: does it generalize, specialize or contradict them? Is it already known under another name? (judg) |
+| TH04 | S2 | B | Notation is defined before use and is consistent. Definitions are not circular. (semi) |
+| TH05 | S2 | C | The limits of the result are shown: counterexamples when an assumption is dropped, and tightness of bounds. (judg) |
+| TH06 | S2 | C | Computer-assisted proofs, formal verifications or numerical evidence are reproducible: code, tool versions and the checked artifact. (semi) |
+| TH07 | S2 | B | A conceptual or verbal theory has defined constructs, explicit propositions and stated boundary conditions, and at least one way it could be shown wrong. (judg) |
+
+### DS — Design, engineering and artifacts
+New systems, tools, methods, devices or processes evaluated against a need. References: design
+science research (Hevner et al.), the SIGSOFT engineering-research standard.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| DS01 | S1 | C | The problem and the requirements come before the solution and stand on their own. (semi) |
+| DS02 | S1 | C | The artifact is described well enough to rebuild or obtain it. (semi) |
+| DS03 | S1 | C | The evaluation tests the artifact against the stated requirements, in a realistic setting, against fair alternatives. A toy example is not called a case study. (judg) |
+| DS04 | S2 | C | All relevant costs are measured, not only the favourable effect: time, resources, energy, usability, maintenance. (semi) |
+| DS05 | S2 | C | The evaluation platform matches the claim: real hardware, users or sites when the claim is about them. Simulation is justified and labelled. (judg) |
+
+### CS — Case studies and case reports
+References: Yin; Runeson & Höst; CARE for clinical case reports.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| CS01 | S1 | C | Why this case: its selection logic (typical, extreme, critical, revelatory) is stated. (semi) |
+| CS02 | S1 | C | The context is described so readers can judge transfer. (semi) |
+| CS03 | S2 | C | Multiple sources of evidence are triangulated, with a chain of evidence from data to conclusion. (semi) |
+| CS04 | S1 | B | Generalization is analytic (to theory), not statistical. Claims beyond the case are framed accordingly. (judg) |
+| CS05 | S0 | C | Clinical case reports: patient consent, de-identification and the CARE items. (semi) |
+
+### AR — Argumentative, humanities, essays, position and vision papers
+For history, philosophy, law, literary and cultural studies, theology and policy analysis, and
+for essays, position papers and vision papers in any field.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| AR01 | S1 | B | The thesis or position is stated early and clearly. A reader can say in one sentence what the paper argues. (semi) |
+| AR02 | S1 | B/C | The argument's structure is visible. Each step is supported by evidence or reasoning, and the conclusion follows from the steps without a leap. (judg) |
+| AR03 | S1 | C | The strongest counterarguments and rival interpretations are engaged in their best form, not as straw men. (judg) |
+| AR04 | S1 | C | The state of the debate (historiography, literature, case law, doctrine) is accurately represented, and the paper's place in it is clear. (judg) |
+| AR05 | S1 | C | Primary sources are used where the claim needs them, are cited precisely (edition, page, folio, article), and are read in context. Secondary claims are not presented as primary findings. (semi) |
+| AR06 | S2 | B | Key terms are defined and used consistently; anachronism and equivocation are avoided. (judg) |
+| AR07 | S2 | B | Position and vision papers: the stakes, the audience and what should change are explicit. It is not a research paper without evidence presented as one. (judg) |
+| AR08 | S2 | A | Citation style follows the field's convention (Chicago, MLA, Bluebook, OSCOLA, ABNT), notes and bibliography agree, and quotations are exact. (semi) |
+
+### SW — Software, data and resource papers
+References: FAIR principles, JOSS, Scientific Data and Data in Brief guidance, Datasheets for
+Datasets.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| SW01 | S0 | C | The resource is publicly available under a stated licence, with a persistent identifier and a version. (semi) |
+| SW02 | S1 | C | Documentation is enough to install, use or load it. For data: a schema, provenance, collection method and known limits (a datasheet). (semi) |
+| SW03 | S1 | C | Quality is demonstrated: tests, validation of the data, coverage, error rates. (semi) |
+| SW04 | S2 | C | Reuse is shown with use cases or users, against existing alternatives. (judg) |
+| SW05 | S2 | C | Maintenance, contribution and citation paths are stated (CITATION file, contact, governance). (semi) |
+
+---
+
+## 8. Field and format packs
+
+### 8.1 Health and life sciences
+Reporting guidelines from the EQUATOR Network: CONSORT for trials, SPIRIT for protocols, STROBE
+for observational studies, STARD for diagnostic accuracy, TRIPOD for prediction models, ARRIVE
+for animal research, CARE for case reports, PRISMA for reviews, SRQR/COREQ for qualitative work,
+CHEERS for economic evaluations. Use the matching checklist in full; the items below are the
+ones most often missed.
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| HE01 | S0 | C | The study is registered when the design requires it (trial registry, PROSPERO), and the registration id is in the abstract where required. (semi) |
+| HE02 | S0 | C | Ethics approval, informed consent and data protection are stated (E07). (semi) |
+| HE03 | S1 | C | The completed reporting checklist and flow diagram are supplied, as the journal requires. (semi) |
+| HE04 | S1 | C | Primary and secondary outcomes are pre-specified, and outcome switching is reported. (semi) |
+| HE05 | S1 | B | Clinical significance is distinguished from statistical significance; absolute effects are given beside relative ones. (judg) |
+| HE06 | S2 | C | Sex and gender are reported as the SAGER guidelines ask. Populations are described well enough to judge applicability. (semi) |
+
+### 8.2 Computing, engineering and other technical fields
+Each pack below is activated when the field matches. Each was built from real reviews.
+
+**ML — Machine learning** (NeurIPS checklist, REFORMS, Pineau, Arp et al.)
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| ML01 | S1 | C | No leakage: nothing fitted on the test set, no duplicates across splits, no temporal leakage, no in-sample "held-out" set. Real case: an F1 of 1.000 reported as held-out was a training-set fit. (judg) |
+| ML02 | S1 | C | The dataset is described: statistics, splits, exclusions, prevalence, origin. (semi) |
+| ML03 | S1 | C | Baselines get the same tuning budget, simple non-ML baselines are included, and no baseline is weakened until it loses. (judg) |
+| ML04 | S2 | C | Hyperparameter search space, selection method (not on test data) and final values are reported, with compute. (semi) |
+| ML05 | S2 | B | Metrics fit the problem (imbalance, base rates). Scores are not compared across prevalences. (judg) |
+| ML06 | S2 | C | Generalization and distribution shift are evaluated on unseen data. (judg) |
+| ML07 | S1 | B | An LLM used inside the method is specified: model, version, prompts, date. (semi) |
+
+**SC — Security and privacy** (calls of USENIX Security, IEEE S&P, NDSS, ACM CCS; Carlini et al.)
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
 | SC01 | S1 | C | The threat model is explicit: capabilities, knowledge, access, goals, trust assumptions, what is out of scope. (semi) |
-| SC02 | S1 | B/C | Every attack cited carries its **preconditions**: required privilege, physical access, the mitigation in silicon or firmware. Real case: a fault-injection attack cited without its kernel-privilege precondition. (judg) |
-| SC03 | S1 | B | The adversary model maps explicitly onto the threat table and onto the controls: adversary → threat → control. (judg) |
-| SC04 | S1 | C | Defenses are evaluated against adaptive attackers who know the defense. (judg) |
-| SC05 | S2 | C | Attacks show practicality: real targets, versions, success rate, cost. (judg) |
-| SC06 | S2 | C | Adversary profiles are anchored in documented real attacks. (semi) |
-| SC07 | S1 | B | A Systematization-of-Knowledge paper is titled "SoK:" where the venue requires it, and it contributes a taxonomy or a new viewpoint, not a description. (judg) |
+| SC02 | S1 | B/C | Every attack cited carries its preconditions (privilege, access) and its known mitigations. (judg) |
+| SC03 | S1 | B | The chain adversary → threat → control is explicit and traceable. (judg) |
+| SC04 | S1 | C | Defenses are evaluated against adaptive attackers. (judg) |
+| SC05 | S1 | B | SoK papers contribute a taxonomy or a new viewpoint, and are titled as the venue requires. (judg) |
 
-### AU — Automotive and safety (ISO/SAE 21434, ISO 26262, ISO 21448, UN R155/R156, AUTOSAR)
+**AU — Automotive, safety-critical and regulated systems** (ISO/SAE 21434, ISO 26262, ISO 21448, UN R155/R156, AUTOSAR)
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| AU01 | S1 | B | Platforms, middleware and protocols are classified correctly. Example: AUTOSAR Adaptive is an execution platform whose communication goes through `ara::com` over SOME/IP or DDS; it is not "a communication standard". (judg) |
-| AU02 | S1 | B | Isolation claims cover both **spatial** isolation (MMU, SMMU/IOMMU, bus firewalls) and **temporal** isolation (deterministic scheduling, cache partitioning, interrupt control). Microkernels and TEEs are contrasted by their roots of trust, and TEEs are acknowledged to run rich software. (judg) |
-| AU03 | S1 | B | The secure-boot chain is the one the platform actually uses. Example: the closed authenticated boot through TF-A (BL1 → BL2 → BL31 → BL32 → BL33) on Arm automotive SoCs, not a generic late-launch model. (judg) |
-| AU04 | S2 | A | Domain acronyms are defined, and ambiguous ones are disambiguated. Examples: the EVITA profiles; SHE versus HSM; HW ECC as error-correcting memory versus elliptic-curve acceleration; TA as a GlobalPlatform Trusted Application. (semi) |
-| AU05 | S1 | C | Standards are mapped with their scopes kept apart (regulation versus engineering life cycle). Clause numbers are checked (R10). A standard not mapped is justified by scope. (semi) |
-| AU06 | S1 | B/C | A scenario borrowed from a source stays inside that source's ODD. The authors' own assumptions are marked as theirs. (judg) |
-| AU07 | S1 | C | The evaluation platform matches the claim: real ECU, bus, HIL or a recognized public dataset. Otherwise the simulation is justified and the claim limited. (judg) |
-| AU08 | S2 | C | A TARA follows the standard's structure: assets, damage and threat scenarios, attack paths, feasibility, risk and treatment. (semi) |
-| AU09 | S2 | C | Claims of ASIL or safety compliance are framed as design intent unless there is a safety case. (judg) |
+| AU01 | S1 | B | Platforms, middleware and protocols are classified correctly. Example: AUTOSAR Adaptive is an execution platform, not "a communication standard". (judg) |
+| AU02 | S1 | B | Isolation claims cover spatial and temporal isolation. Roots of trust are contrasted precisely: microkernel versus TEE. (judg) |
+| AU03 | S1 | B | The boot and trust chain is the one the platform actually uses. (judg) |
+| AU04 | S2 | A | Domain acronyms are defined and disambiguated. (semi) |
+| AU05 | S1 | B/C | A scenario borrowed from a source stays inside its operational design domain. The authors' own assumptions are marked as theirs. (judg) |
+| AU06 | S2 | B | Compliance claims (ASIL, certification) are framed as design intent unless a safety case exists. (judg) |
 
-### SY — Systems, embedded and benchmarking (Heiser's benchmarking crimes, SIGPLAN checklist)
+**SY — Systems, embedded and benchmarking** (Heiser's "benchmarking crimes"; the SIGPLAN checklist)
 
 | Id | Sev | Fix | Check |
 |---|---|---|---|
-| SY01 | S1 | C | The baseline is fair and equally configured (same compiler flags and tuning), and it is the state of the art or the choice is justified. (judg) |
-| SY02 | S1 | C | The platform is fully specified: CPU/MCU and clock, memory, OS/RTOS, compiler and flags, library versions. (semi) |
-| SY03 | S2 | C | Benchmarks are standard, or the subset is justified. Microbenchmarks are not sold as application performance. (judg) |
-| SY04 | S2 | C | All relevant effects are measured, not only the favourable one: latency and throughput, memory and flash, energy, WCET and jitter. (semi) |
-| SY05 | S2 | C | Warm-up and steady state are handled, with enough repetitions and per-benchmark results, plus absolute numbers alongside the relative ones. (semi) |
-| SY06 | S1 | B/C | Simulation and hardware results are never mixed without labels. Each number states whether it came from silicon, emulation (e.g. QEMU) or simulation. Determinism claims are scoped to the conditions measured (bare metal without interrupts ≠ RTOS). (judg) |
-| SY07 | S2 | C | The measurement setup is described: instrument, resolution, grounding and calibration, and an independent timestamp source where timing is the result. (semi) |
+| SY01 | S1 | C | The platform is fully specified: hardware and clock, memory, OS, compiler and flags, versions. (semi) |
+| SY02 | S1 | B/C | Simulation, emulation and hardware results are labelled and never mixed. Determinism claims are scoped to the conditions measured. (judg) |
+| SY03 | S2 | C | Benchmarks are standard, or subsetting is justified. Microbenchmarks are not sold as application performance. (judg) |
+| SY04 | S2 | C | Warm-up, steady state, repetitions, per-benchmark and absolute numbers are given. (semi) |
+
+### 8.3 Format packs — *how long* and *for what*
+
+**SH — Short formats** (work-in-progress, short paper, poster, extended abstract, letter)
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| SH01 | S1 | B | One contribution, stated plainly. Do not compress a full paper into the short format (scope cramming). (judg) |
+| SH02 | S2 | B | Preliminary results are labelled as preliminary, with what comes next. (semi) |
+
+**LG — Long formats** (journal article over the usual length, book chapter, thesis, dissertation, monograph)
+
+| Id | Sev | Fix | Check |
+|---|---|---|---|
+| LG01 | S1 | C | A chapter fits the volume's theme and the editors' brief, in length and audience. (semi) |
+| LG02 | S1 | C | A thesis follows the institution's rules (structure, front matter, length, language, similarity threshold, required statements). (semi) |
+| LG03 | S2 | B | The whole is coherent: chapters connect, terms do not drift, and the introduction promises what the conclusion delivers. Run the core domains per chapter and once more on the whole. (judg) |
+| LG04 | S1 | C | Material reused from published articles is disclosed, with permission where the publisher requires it. (semi) |
+
+### 8.4 Your field
+A field not covered here gets a pack in the project. Write `venue/review-pack.md` with a table
+in the same format: id prefix `FX`, severity, fix class, check. The panel reads it as a field
+pack. When a pack proves itself on two projects, propose it upstream, so the next project
+starts with it.
 
 ---
 
-## 8. Lessons from real reviews
+## 9. Lessons from real reviews
 
-Each row is a real event, anonymized. Venue types are kept because the lesson depends on them.
+Each row is a real event, anonymized, stated as a general rule with the case as its example.
+The cases come from technical fields, where this protocol was first used. Every rule holds for
+any article.
 
-| # | What happened | Checks |
-|---|---|---|
-| 1 | A paper titled as a systematic review was submitted while screening was "ongoing" and one database was listed as "to be done". Instant reject. | SR01, H01 |
-| 2 | A systematic review, a reference architecture, a threat matrix and PQC measurements were packed into 6 pages: "overly ambitious, leaving each part without depth". | K05, V03, K12 |
-| 3 | An expert reviewer found platforms misclassified, TEEs oversimplified, a wrong boot model and undefined acronyms, and called the paper "largely AI-driven … limited human oversight". Strong Reject at high confidence, outweighing two Weak Accepts. | W04, AU01–AU04, W02 |
-| 4 | A fault-injection attack was cited without its privilege preconditions. | SC02 |
-| 5 | About ten citations, including the one for the code and data, printed as `[?]`: "unpublishable as-is". | H02, H03, H04 |
-| 6 | Core concepts were defined only in the authors' "in press" paper, which reviewers could not access. | R12 |
-| 7 | The headline result rested on an analysis added after the confirmatory runs, which benefited from a testbed simplification (one fixed IP per account). | M04, M08, K07 |
-| 8 | Most differences between the compared profiles held "by construction". | M03 |
-| 9 | "In response to review" and "the standard was not available to the authors" were printed in the paper. | H06, W05 |
-| 10 | A generic flow diagram took space that the method details needed; the testbed's traffic generation, randomization and ground truth were missing. | W06, M02 |
-| 11 | Two reviewers asked what exactly was new over known practices. | K03, K04 |
-| 12 | A journal desk-rejected a broad framework paper because its main component was "illustrative rather than experimentally evaluated". The submitted version still held `\tbd` placeholders. | K05, H01 |
-| 13 | An engineering congress rejected a review twice for no stated selection method, references never cited in the text, wrong template, and 5 pages where about 12 were expected. | SR03–SR05, H04, V02, V03 |
-| 14 | Internal audits found invented co-authors, wrong titles and nonexistent references in agent-drafted bibliographies, in about ten projects. | R01 |
-| 15 | Numbers were credited to the wrong reference; a source's criterion was inverted; a robustness study was described as something else. | R04 |
-| 16 | A scenario was placed outside the ODD of the system it borrowed. | AU06 |
-| 17 | A standard was cited by the wrong clause. | R10 |
-| 18 | An F1 of 1.000 reported as held-out was a training-set fit. A cross-dataset failure was attributed to "the vehicle" when the design could not isolate the vehicle. | ML01, M07, M16 |
-| 19 | "19 experiments" was read off the highest experiment number; 14 existed. A unique-ID column mixed two definitions and supported a false claim. | X03 |
-| 20 | An accuracy computed on 0.5 M frames sat next to "16.8 M frames" in the abstract. | X04 |
-| 21 | "Latency below 0.1 ms" was a single fast sample; ten runs measured 0.156 ms. Re-running exposed it, reading did not. | X02, M09, M17 |
-| 22 | Seeds and versions disappeared when the paper was cut to the page limit; so did the table that carried the contribution. | X09 |
-| 23 | The public repository was two manuscript versions behind, and a script the paper named returned 404. | X05 |
-| 24 | An artifact repository carried an AI co-author trailer. Removing the AI disclosure was considered and rejected: the earlier submission already carried it. | E04, E05, X08 |
-| 25 | A paper was anonymized for one venue and kept anonymized for the next venue, which was not anonymous; its code note had no URL. | P02, E03 |
-| 26 | An abstract of 302 words went to a venue with a 250-word limit; author biographies and ORCIDs were missing. | V04, V05, V06 |
-| 27 | "Low-cost" was claimed four times with no cost anywhere; one RQ could only be answered yes. | K09, K01 |
-| 28 | A method section described screening steps in the past tense before they had run. | M06 |
-| 29 | Placeholder audits counted 154 `\phn` and 27 `\PH` in one manuscript, and one figure drawn from data that did not exist. | H01, X01 |
-| 30 | Credentials were found in committed project memory, and one internal note was publicly reachable. | H13, X08 |
+| # | Rule | The case | Checks |
+|---|---|---|---|
+| 1 | Do not call unfinished work by the name of the finished method | a "systematic review" submitted while screening was "ongoing" and one database "to be done"; instant reject | RV01, H01, K06 |
+| 2 | The scope fits the length | a review, an architecture, a threat matrix and measurements in 6 pages: "each part without depth" | SH01, K05, V03 |
+| 3 | Field precision is what experts check first; vagueness reads as unsupervised AI | misclassified platforms and undefined acronyms, called "largely AI-driven … limited human oversight": a Strong Reject that outweighed two Weak Accepts | W04, R1 role, AU01–AU04 |
+| 4 | Every cited effect carries its conditions | an attack cited without its privilege preconditions | SC02, R04 |
+| 5 | The rendered PDF is the paper | about ten citations, including the one to the data, printed as `[?]`: "unpublishable as-is" | H02–H04 |
+| 6 | The paper is self-contained | core concepts defined only in the authors' inaccessible "in press" paper | R12 |
+| 7 | The headline rests on the strongest evidence | the headline came from a post-hoc analysis that benefited from a convenient simplification of the setting | M04, M08, K07 |
+| 8 | What the design guarantees is not a finding | most compared differences held "by construction" | M03 |
+| 9 | The review history and the authors' circumstances stay out of the text | "in response to review" and "the standard was not available to the authors" in the paper | H06, W05 |
+| 10 | Space goes to what the reader cannot reconstruct | a generic diagram took the space that the procedure details needed | W06, M02 |
+| 11 | Novelty is shown against named predecessors | "what exactly is new over known practices?" from two reviewers | K03, K04 |
+| 12 | The element in the title is the best-evaluated one | a broad framework whose main component was "illustrative rather than experimentally evaluated"; the version sent still had a placeholder | K05, H01 |
+| 13 | Method, citation in the body, template and length are the venue's first filters | a review rejected twice for no selection method, references never cited in the text, the wrong template, and half the expected length | RV03–RV05, H04, V02, V03 |
+| 14 | Every reference is verified, not trusted | invented co-authors, wrong titles and nonexistent works in agent-drafted bibliographies across about ten projects | R01 |
+| 15 | The source says what the sentence says | numbers credited to the wrong reference; a source's criterion inverted; a study described as another kind of study | R04 |
+| 16 | Borrowed scenarios, cases or definitions keep their original conditions | a scenario placed outside the conditions of the system it was borrowed from | AU05, R04 |
+| 17 | Normative texts are cited by the right clause | a standard cited by the wrong clause | R10 |
+| 18 | A perfect result is a question, not an answer | a held-out score of 1.000 that was a training-set fit; a failure credited to a factor the design could not isolate | M11, M07, ML01 |
+| 19 | Counts are counted | "19 experiments" read off the highest number while 14 existed; one column with two definitions supported a false claim | X03 |
+| 20 | Denominators are explicit | a score on a subset next to the size of the whole corpus | X04 |
+| 21 | Re-derive before you print | a "below 0.1 ms" bound was one fast sample; ten runs said 0.156 ms. Re-running found it, reading did not | X02, QN03 |
+| 22 | Cutting for length must not cut provenance | seeds, versions and the table carrying the contribution vanished in a cut | X09 |
+| 23 | Public materials match the submitted version | the public repository was two versions behind; a named script did not exist | X05 |
+| 24 | AI involvement is disclosed, never hidden after the fact | an AI co-author trailer in public materials; removing an existing disclosure was considered and rejected | E04, E05, X08 |
+| 25 | Each venue's rules are read fresh | a paper kept anonymized for a venue that was not anonymous, with no data link | P02, E03 |
+| 26 | Formal limits are numbers, checked | 302 words for a 250-word abstract; missing biographies and author identifiers | V04–V06 |
+| 27 | Load-bearing adjectives are measured; questions can fail | "low-cost" four times with no cost; a research question answerable only "yes" | K09, K01 |
+| 28 | Methods are reported as done only when done | screening steps described in the past tense before they ran | M06 |
+| 29 | Placeholders are counted, not estimated | 154 placeholder macros where 33 were believed; a figure drawn from data that did not exist | H01, X01 |
+| 30 | Secrets never enter the record | credentials in committed project notes; one internal note publicly reachable | H13, X08 |
 
 When a real review arrives, quote it in `reviews/` (CONSTITUTION rule 18). If it raises
-something no check above catches, add a row here and a check upstream in article-docs. A lesson
-written only in one project's memory is lost to the next project.
+something no check catches, add a row here and a check upstream. A lesson kept in one
+project's memory is lost to the next.
 
 ---
 
-## 9. Reviewer anti-patterns (applied to the virtual reviewers)
+## 10. Reviewer anti-patterns (applied to the virtual reviewers)
 
-A finding is dropped at lead verification (step 4) if it:
+At lead verification (step 5), drop any finding that:
 
-- is not **specific and actionable**: it must name the section or line and what is missing.
-  "Lacks novelty" without the identical prior work is not a finding.
-- is an **invalid criticism**: an arbitrary sample size with no power argument, rejecting a
-  replication or a negative result for being one, preferring a different method, demanding
-  that a case study generalize.
-- **contradicts another finding** ("too long" and "missing details" on the same section).
-- reviews the paper the reviewer would have written rather than the one submitted.
-- asks for analyses unrelated to the research questions.
-- treats the checklist as a "gotcha" instead of as support for judgment.
+- **Is not specific and actionable.** It must name the place and what is missing. "Lacks
+  novelty" without the prior work it duplicates is not a finding.
+- **Is an invalid criticism.** Examples: an arbitrary sample size with no argument; faulting a
+  replication, a negative result or a qualitative design for being one; preferring a different
+  method or school; asking a case study to generalize statistically.
+- **Contradicts another finding**, such as "too long" and "missing details" for the same section.
+- **Reviews the paper the reviewer would have written** rather than the one submitted.
+- **Asks for work unrelated to the question** of the paper.
+- **Imposes one paradigm's standard on another** (rule 4).
+- **Uses the checklist as a "gotcha"** instead of as support for judgment.
 
 ---
 
-## 10. Output formats
+## 11. Output formats
 
 ### Finding
 ```
 VR-<domain>-<nn> · <check id> · S<0-4> · class <A|B|C> · <reviewer> · confidence <1-5>
 Where:    <file>:<line> | PDF p.<n> §<section>
-Evidence: "<the exact text>"  or  <data file → key → value>
+Evidence: "<the exact text>"  or  <source → location → value>
 Problem:  <one sentence>
 Fix:      <what to change, or what would close it>
 Status:   verified | rejected (why) | uncertain — applied | proposed d-NNNN | todo t-NNNN
@@ -508,6 +691,7 @@ id: virtual-review-<YYYY-MM-DD>-r<N>
 title: Virtual review round <N> — <venue>
 date: <YYYY-MM-DD>
 manuscript: <file> @ <commit or editor version>
+classification: type <QN|QL|…> · field <…> · format <…>
 venue: <venue> (<review regime>)
 panel: R0 <model>, R1 <model>, R2 <model>, R3 <model>, R4 <model>, R5 <model>
 gate: blocked | open
@@ -517,7 +701,7 @@ overall: Strong Reject | Weak Reject | Weak Accept | Strong Accept
 # Virtual review — round <N>
 
 ## Verdicts
-| Domain | Verdict | S0 | S1 | S2 | S3 | Main reason |
+| Domain / pack | Verdict | S0 | S1 | S2 | S3 | Main reason |
 |---|---|---:|---:|---:|---:|---|
 
 ## Venue form (as the real reviewers would fill it)
@@ -525,11 +709,11 @@ overall: Strong Reject | Weak Reject | Weak Accept | Strong Accept
 ## Strengths to protect
 
 ## Findings
-<one block per finding, the format above, grouped by domain>
+<one block per finding, in the format above, grouped by domain and pack>
 
 ## Applied
 - class A: <list> · class B: <list, each with its d-NNNN>
-- branch: virtual-review/<date>; number-set regression: identical | <differences, each justified>
+- where: <branch or dated copy>; content regression: identical | <differences, each justified>
 
 ## Decisions
 - **[#d-NNNN]** date: <YYYY-MM-DD> · status: proposed · author: <the human who asked for the review>
@@ -541,56 +725,69 @@ overall: Strong Reject | Weak Reject | Weak Accept | Strong Accept
 ```
 
 ### Report to the human
-One verdict table, then the overall verdict and the gate, then the venue-form scores, then
-"applied", "waiting on you", and "waiting on data". Last come the three changes that would
-move the overall verdict most, cheapest first. Use the human's language. No finding appears in
-the report that is not in the record.
+Write it in the human's language and put the sections in this order:
+
+1. The classification.
+2. The gate.
+3. The verdict table.
+4. The overall verdict.
+5. The venue-form scores.
+6. What was applied.
+7. What waits on you.
+8. What waits on evidence.
+9. The three changes that would move the verdict most, cheapest first.
+
+No finding appears in the report that is not in the record.
 
 ---
 
-## 11. Sources
+## 12. Sources
 
-Reporting and empirical standards:
-- ACM SIGSOFT Empirical Standards: github.com/acmsigsoft/EmpiricalStandards
-- PRISMA 2020 and PRISMA-S: prisma-statement.org
+**Reporting standards across fields**
+- EQUATOR Network (equator-network.org): CONSORT, SPIRIT, STROBE, STARD, TRIPOD, ARRIVE, CARE,
+  PRISMA 2020, PRISMA-S, PRISMA-ScR, MOOSE, SRQR, COREQ, CHEERS, SAGER
+- APA Journal Article Reporting Standards (JARS-Quant, JARS-Qual, JARS-Mixed)
+- GRAMMS (O'Cathain et al.)
+- GRADE
+- ACM SIGSOFT Empirical Standards (github.com/acmsigsoft/EmpiricalStandards)
+
+**Reviews and case studies**
 - Kitchenham & Charters, EBSE-2007-01
-- Petersen et al., IST 2015, doi:10.1016/j.infsof.2015.03.007
-- Runeson & Höst, EMSE 2009, doi:10.1007/s10664-008-9102-8
+- Petersen et al., doi:10.1016/j.infsof.2015.03.007
+- Runeson & Höst, doi:10.1007/s10664-008-9102-8
+- Yin, *Case Study Research*
 
-Machine learning:
-- NeurIPS Paper Checklist: neurips.cc/public/guides/PaperChecklist
-- REFORMS: reforms.cs.princeton.edu
+**Design and resource papers**
+- Hevner et al., "Design Science in Information Systems Research"
+- FAIR principles
+- JOSS review criteria
+- Datasheets for Datasets (arXiv:1803.09010)
+- Model Cards (arXiv:1810.03993)
+
+**Machine learning and security**
+- NeurIPS Paper Checklist
+- REFORMS (reforms.cs.princeton.edu)
 - Pineau, ML Reproducibility Checklist
-- AAAI Reproducibility Checklist
-- Model Cards (arXiv:1810.03993); Datasheets for Datasets (arXiv:1803.09010)
-- Arp et al., "Dos and Don'ts of ML in Computer Security", USENIX Security 2022 (dodo-mlsec.org)
-
-Security venues:
+- Arp et al., USENIX Security 2022
+- Carlini et al., arXiv:1902.06705
 - Calls for papers of USENIX Security, IEEE S&P, NDSS and ACM CCS
-- Carlini et al., "On Evaluating Adversarial Robustness" (arXiv:1902.06705)
 - The Menlo Report
 
-Artifacts:
-- ACM Artifact Review and Badging v1.1
-- USENIX Security artifact evaluation (secartifacts.github.io)
-
-Systems and statistics:
+**Systems**
 - Heiser, "Systems Benchmarking Crimes"
 - SIGPLAN Empirical Evaluation Checklist
-- Arcuri & Briand, ICSE 2011
-- Dror et al., ACL 2018
+- ACM Artifact Review and Badging
 
-Generative AI and publication ethics:
-- ICMJE; COPE, "Authorship and AI tools"
-- Elsevier, IEEE, ACM and Springer Nature generative-AI policies
-
-Citation integrity:
-- Crossref with Retraction Watch data
+**Ethics and integrity**
+- ICMJE Recommendations
+- COPE guidance: authorship and AI tools, citation manipulation
+- The generative-AI policies of Elsevier, IEEE, ACM, Springer Nature, Wiley, Taylor & Francis and SAGE
+- Crossref and Retraction Watch data
 - Think.Check.Submit
 
-On reviewing:
+**On reviewing**
 - Smith, "The Task of the Referee"
 - Allman, "Thoughts on Reviewing"
 - Cormode, "How NOT to review a paper"
 - Keshav, "How to Read a Paper"
-- IEEE PDF eXpress / Xplore requirements
+- The reviewer guidelines of Elsevier, Springer Nature and the major society publishers

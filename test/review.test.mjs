@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFileSync, readFileSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { join, run, tempDir, cleanup, CLI, inProject, gitProject } from './helpers.mjs';
 
 /** An installed project with a manuscript in paper/. `tex` replaces the body. */
@@ -101,6 +102,56 @@ describe('review lint', () => {
     const { report } = lint(dir, '--abstract-max', '4');
     assert.equal(report.abstract_words, 6);
     assert.ok(has(report, 'H10', 'S1'));
+    cleanup(dir);
+  });
+
+  test('a manuscript that is not LaTeX is linted as text: Word residue and citation placeholders block', () => {
+    const dir = paper('unused');
+    writeFileSync(join(dir, 'paper', 'essay.md'), [
+      '# An essay', '', '## Abstract', '', 'We argue one thing in seven words here.', '', '## Introduction', '',
+      'Prices rose 95% in a decade [citation needed].', 'As shown in Error! Reference source not found. above.', '',
+    ].join('\n'));
+    const res = inProject(dir, ['review', 'lint', join(dir, 'paper', 'essay.md'), '--json']);
+    const report = JSON.parse(res.stdout);
+    assert.equal(res.code, 1);
+    assert.equal(report.mode, 'text');
+    assert.equal(report.abstract_words, 8);
+    assert.ok(has(report, 'H01', 'S0', /citation placeholder/));
+    assert.ok(has(report, 'H03', 'S0', /Word cross-reference/));
+    assert.ok(!report.findings.some(f => f.id === 'H02'), 'no build log is expected outside LaTeX');
+    cleanup(dir);
+  });
+
+  test('a Word source is refused with the instruction to lint its PDF', () => {
+    const dir = paper('unused');
+    writeFileSync(join(dir, 'paper', 'paper.docx'), 'PK');
+    const res = inProject(dir, ['review', 'lint', join(dir, 'paper', 'paper.docx')]);
+    assert.equal(res.code, 1);
+    assert.match(res.stderr, /export it to PDF/);
+    cleanup(dir);
+  });
+
+  test('a PDF alone is linted from its rendered text, when poppler is installed', (t) => {
+    let poppler = true;
+    try { execSync('pdftotext -v', { stdio: 'pipe' }); } catch (e) { poppler = !/not (found|recognized)/i.test(String(e.stderr)) && e.status !== 127 && e.code !== 'ENOENT'; }
+    if (!poppler) { t.skip('pdftotext not installed'); return; }
+    const dir = paper('x');
+    // A one-page PDF whose only text is "Results TODO [?]".
+    const content = 'BT /F1 12 Tf 72 720 Td (Results TODO [?]) Tj ET';
+    const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+      `<< /Length ${content.length} >>\nstream\n${content}\nendstream`, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];
+    let pdf = '%PDF-1.4\n'; const offs = [];
+    objs.forEach((o, i) => { offs.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + offs.map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('')
+         + `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+    writeFileSync(join(dir, 'paper', 'submitted.pdf'), pdf);
+    const res = inProject(dir, ['review', 'lint', join(dir, 'paper', 'submitted.pdf'), '--json']);
+    const report = JSON.parse(res.stdout);
+    assert.equal(report.mode, 'pdf');
+    assert.ok(has(report, 'H01', 'S0'));
+    assert.ok(has(report, 'H03', 'S0', /\[\?\]/));
     cleanup(dir);
   });
 

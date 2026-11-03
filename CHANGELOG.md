@@ -3,15 +3,27 @@
 ## v1.3.0 — 2026-11-03
 
 ### Added — `/artdocs:virtual-review` and `VIRTUAL-REVIEWERS.md`
-A pre-submission review protocol. A panel of six reviewer roles reads the article domain by
-domain: editor pre-screen, hostile domain expert, methodologist, data versus artifact,
-references, language and venue style. Each domain gets a **Strong Accept, Weak Accept, Weak
-Reject or Strong Reject** verdict from fixed severity rules (S0–S4). The overall verdict and
-the gate follow from those, and are translated into the venue's own review form.
-- **Core domains:** P pre-flight on the memory, V venue fit, H build hygiene, R references, K
-  contribution and claims, M method and statistics, X evidence and artifacts, W writing, E
-  ethics, anonymity and AI policy.
-- **Packs:** systematic reviews, ML, security, automotive and safety, systems and benchmarking.
+A pre-submission review protocol for **any kind of scholarly text, in any source format**.
+
+It first classifies the article by type, field and format. A panel of six reviewer roles then
+reads it domain by domain: editor pre-screen, hostile field expert, methodologist of the paper's
+own paradigm, evidence versus sources, references, language and venue style. Each domain and
+pack gets a **Strong Accept, Weak Accept, Weak Reject or Strong Reject** verdict from fixed
+severity rules (S0–S4). The overall verdict and the gate follow from those, and are translated
+into the venue's own review form.
+- **Core domains, for every article:** P pre-flight on the memory, V venue fit, H document
+  hygiene, R references and sources, K contribution and claims, M method and validity
+  (paradigm-aware), X evidence and materials, W writing, E ethics, integrity, anonymity and
+  AI policy.
+- **Type packs:** quantitative, qualitative, mixed methods, reviews (systematic, scoping,
+  meta-analysis, narrative), theoretical and mathematical, design and engineering, case
+  studies, argumentative and humanities (including position papers), software and data
+  papers.
+- **Field packs:** health and life sciences (the EQUATOR guidelines), ML, security,
+  automotive and safety, systems.
+- **Format packs:** short formats, and long ones (chapters, theses).
+- **Your own field:** `venue/review-pack.md`.
+- **Rule 4:** a paper is judged by the standards of its own paradigm.
 - **Thirty lessons**, each a real rejection or internal audit, anonymized and mapped to the
   checks that would have caught it.
 - **`--apply`** makes the fixes that need no new data on a local branch. Mechanical fixes are
@@ -23,8 +35,14 @@ the gate follow from those, and are translated into the venue's own review form.
   `upgrade` installs and refreshes it.
 
 ### Added — `artdocs review lint`
-The deterministic half of the protocol, offline and without dependencies. It checks:
-- placeholders, including project macros such as `\tbd`, `\PH` and `\phn`;
+The deterministic half of the protocol, offline and without dependencies.
+
+It takes a LaTeX source (source, log, bibliography and PDF), **a PDF alone** (how a Word,
+LibreOffice or any other manuscript is checked: from the rendered text), or Markdown. It refuses
+a `.docx` with the instruction to export it. It checks:
+- placeholders, including project macros such as `\tbd`, `\PH` and `\phn`, citation placeholders
+  (`[ref]`, `[citation needed]`) and broken Word cross-references ("Error! Reference source not
+  found");
 - the build log: undefined citations and references, missing files, fatal errors, overfull
   boxes, and a log older than the sources;
 - the rendered PDF through poppler when it is installed: `[?]`, `??`, fonts, metadata, page
