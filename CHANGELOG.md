@@ -1,5 +1,68 @@
 # Changelog
 
+## v1.3.0 — 2026-11-03
+
+### Added — `/artdocs:virtual-review` and `VIRTUAL-REVIEWERS.md`
+A pre-submission review protocol for **any kind of scholarly text, in any source format**.
+
+It first classifies the article by type, field and format. A panel of six reviewer roles then
+reads it domain by domain: editor pre-screen, hostile field expert, methodologist of the paper's
+own paradigm, evidence versus sources, references, language and venue style. Each domain and
+pack gets a **Strong Accept, Weak Accept, Weak Reject or Strong Reject** verdict from fixed
+severity rules (S0–S4). The overall verdict and the gate follow from those, and are translated
+into the venue's own review form.
+- **Core domains, for every article:** P pre-flight on the memory, V venue fit, H document
+  hygiene, R references and sources, K contribution and claims, M method and validity
+  (paradigm-aware), X evidence and materials, W writing, E ethics, integrity, anonymity and
+  AI policy.
+- **Type packs:** quantitative, qualitative, mixed methods, reviews (systematic, scoping,
+  meta-analysis, narrative), theoretical and mathematical, design and engineering, case
+  studies, argumentative and humanities (including position papers), software and data
+  papers.
+- **Field packs:** health and life sciences (the EQUATOR guidelines), ML, security,
+  automotive and safety, systems.
+- **Format packs:** short formats, and long ones (chapters, theses).
+- **Your own field:** `venue/review-pack.md`.
+- **Rule 4:** a paper is judged by the standards of its own paradigm.
+- **Thirty lessons**, each a real rejection or internal audit, anonymized and mapped to the
+  checks that would have caught it.
+- **`--apply`** makes the fixes that need no new data on a local branch. Mechanical fixes are
+  applied. Wording fixes are applied *and* recorded as `proposed` decisions. Anything that
+  needs a measurement, a re-run, an unverified reference or a person becomes a todo. Nothing is
+  invented, no number changes without a data file behind it, and nothing is pushed.
+- Replaces the root-level `VIRTUAL-REVIEWS.md`, which no project received and whose
+  `/artdocs:virtual-review` command did not exist. The new file is framework-owned, so
+  `upgrade` installs and refreshes it.
+
+### Added — `artdocs review lint`
+The deterministic half of the protocol, offline and without dependencies.
+
+It takes a LaTeX source (source, log, bibliography and PDF), **a PDF alone** (how a Word,
+LibreOffice or any other manuscript is checked: from the rendered text), or Markdown. It refuses
+a `.docx` with the instruction to export it. It checks:
+- placeholders, including project macros such as `\tbd`, `\PH` and `\phn`, citation placeholders
+  (`[ref]`, `[citation needed]`) and broken Word cross-references ("Error! Reference source not
+  found");
+- the build log: undefined citations and references, missing files, fatal errors, overfull
+  boxes, and a log older than the sources;
+- the rendered PDF through poppler when it is installed: `[?]`, `??`, fonts, metadata, page
+  count;
+- citations against the bibliography, including `\bibitem`s the text never cites;
+- anonymity, taken from `venue/`. A contradictory `venue/` is reported instead of guessed;
+- template tampering, hidden or LLM-directed text, editorial meta-language, acronyms used
+  before they are defined, and the abstract length;
+- credentials in the manuscript or the memory. The value is never printed;
+- AI co-author trailers in the history.
+
+It exits 1 while any S0 remains.
+
+### Changed
+- `reindex` reads `reviews/`, one level deep for `reviews/virtual/`. Decisions and todos
+  opened in a review round now reach `status` and `promote`; before, they were invisible.
+  Review files are indexed as type `review`.
+- New starter skill `virtual-review` (36 → 37).
+- `submission-checklist.md` and `validating-the-thesis.md` point at the panel.
+
 ## v1.2.0 — 2026-09-19
 
 ### Changed — `promote` no longer requires a terminal

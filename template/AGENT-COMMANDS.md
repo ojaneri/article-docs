@@ -20,7 +20,7 @@ wrong.
 | `experiments/` | measurement or analysis campaign | setup, instruments, parameters, data provenance, how to rerun it |
 | `venue/` | target venue | format rules, page and reference limits, deadlines, anonymity policy, submission steps |
 | `references/` | bibliography area | what each key source is used for, and which entries are unverified |
-| `reviews/` | review round | the reviewers' points and the response to each |
+| `reviews/` | review round | the reviewers' points and the response to each; `reviews/virtual/` holds the virtual-reviewer rounds |
 
 A section file, a claim file and an experiment file all have the same shape, so the tooling
 treats them alike: a heading, prose, then `## Decisions` and `## Todos`.
@@ -42,6 +42,7 @@ job to notice which operation it is:
 | why did we do it this way · why this metric | read the decisions in that file; if there is none, **say so** rather than inventing one |
 | here's how the PDF is built · that analysis command worked · save that | **skill** |
 | is the memory still right · what's undocumented · check it | **check** |
+| review my paper · is it ready to submit · what would the reviewers say · simulate the review | **virtual-review** (6c) — verdict per domain; add `--apply` only if they asked you to fix |
 | what's waiting on me · what did you propose | **promote** — list, show the reasoning, then wait |
 | accept that · approve the framing decision | **promote** with the id — and only if their role allows it |
 | that's it · we're done for today | **end** |
@@ -238,6 +239,33 @@ The CLI still enforces the human-role half on its own (`PROMOTING_ROLES`, and
 `identity/agents.registry.json` for any workload running unattended, without a human in the
 loop) — this section is the other half, the one no code can enforce: never ask a person to
 open a console for something they just told you to do.
+
+## 6c. `virtual-review` — review the article before a reviewer does
+
+**When:** before any submission or resubmission, and after each major revision.
+
+The procedure is **`VIRTUAL-REVIEWERS.md`**, in this directory. It is long on purpose; follow
+it rather than a summary of it. Its spine:
+
+1. Classify the article — its type (quantitative, qualitative, review, theoretical, design,
+   case study, argumentative, software/data…), field and format — because that picks the
+   standard it is judged by.
+2. Build or export the PDF, then run the deterministic pass — it decides what a script can decide:
+   ```bash
+   node article-docs/bin/artdocs.mjs review lint <main.tex | paper.pdf> --json   # exit 1 while any S0 remains
+   ```
+3. A panel of six reviewer roles (editor, hostile field expert, methodologist of the paper's
+   paradigm, evidence versus sources, references, language) reads the paper by domain and
+   pack; the lead verifies every S0/S1 against the source before acting on it.
+4. Each domain and pack gets **Strong Accept, Weak Accept, Weak Reject or Strong Reject**;
+   any S0 blocks submission.
+5. With `--apply`: mechanical fixes are made, wording fixes are made **and** recorded as
+   `proposed` decisions, and anything that needs data or a person becomes a todo. All of it on
+   a local branch `virtual-review/<date>`, nothing pushed.
+6. The round is written to `reviews/virtual/<date>-r<N>.md`; `reindex` reads `reviews/`, so its
+   decisions and todos reach `status` and `promote`.
+
+---
 
 ## 7. `end` — close the session
 

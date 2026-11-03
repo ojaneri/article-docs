@@ -2,6 +2,9 @@
 
 Run this with a human present. Submission is one-shot per deadline.
 
+Run `/artdocs:virtual-review` first (`VIRTUAL-REVIEWERS.md`) and get the gate open — no S0
+left. This list is the human's last pass over what the panel cannot sign for.
+
 ## The manuscript
 - [ ] Built clean from a fresh checkout — no local file, no uncommitted figure.
 - [ ] **No placeholder survives.** Every unmeasured number, every empty table cell, every

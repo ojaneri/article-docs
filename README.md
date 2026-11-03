@@ -91,6 +91,7 @@ and opencode. **It never overwrites a file that already exists.**
 | `/artdocs:decide` | records a choice, with the alternative and its cost, as `proposed` |
 | `/artdocs:skill` | captures a procedure that actually worked |
 | `/artdocs:check` | `reindex`, `validate`, `git drift`, and the todos that block submission |
+| `/artdocs:virtual-review [article] [--apply]` | for any kind of article — empirical, qualitative, review, theoretical, design, case study, essay or humanities, software or data paper, in LaTeX, Word or Markdown — a six-role reviewer panel reads it domain by domain and gives each domain **Strong Accept / Weak Accept / Weak Reject / Strong Reject**, with the fix for every finding; `--apply` makes the fixes that need no new data, on a local branch — see `VIRTUAL-REVIEWERS.md` |
 | `/artdocs:end` | closes the session, including what was tried and abandoned |
 
 Or say it in plain language — `AGENT-COMMANDS.md` maps ordinary sentences onto the seven
@@ -99,7 +100,7 @@ CLI.
 
 ## The skills that ship with it
 
-Every install starts with 36 procedures, each marked `unverified` until it is actually run in
+Every install starts with 37 procedures, each marked `unverified` until it is actually run in
 your project:
 
 **Finding the literature** — OpenAlex (key-less, broad), Semantic Scholar (citation graph,
@@ -115,7 +116,10 @@ results); trace every number back to the data that produced it; recompute the re
 statistics; check each citation actually says what the sentence says it says; sweep the
 threats to validity; and finally an adversarial pass that reads the paper as someone who
 wants to reject it. The `validating-the-thesis.md` playbook puts them in the order that
-makes each one cheap.
+makes each one cheap; `VIRTUAL-REVIEWERS.md` runs all of them as a reviewer panel, with a
+verdict per domain, packs per article type, field and format, a deterministic pre-pass
+(`artdocs review lint`, on the LaTeX source or on the PDF of any manuscript), and thirty lessons
+from real rejections turned into checks.
 
 **Repository and release** — create the paper's repository (private, always), publish an
 anonymised copy for double-anonymous review, tag exactly what was submitted, and produce the
@@ -216,6 +220,7 @@ artdocs skills list | search <q> | verify <id>     STALE after 120 days
 artdocs skills sync [<dir>] [--dry-run]            add new template skills, never touch yours
 artdocs reindex | validate | doctor                keep the memory honest
 artdocs git drift                                  sources changed without their memory
+artdocs review lint [<main.tex|paper.pdf>] [--json] offline pre-submission checks; exit 1 on any S0
 artdocs invite | join                              add a co-author
 artdocs hooks install                              pre-commit: validate blocks, drift warns
 artdocs upgrade [<dir>] [--dry-run]                update an install to this release

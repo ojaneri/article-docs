@@ -43,6 +43,13 @@ genuinely fresh reading on them.
 - **Nothing is invented to close a gap.** If the evidence for a claim does not exist, the
   finding is "this claim has no evidence", and the fix is measurement or a weaker claim.
 
+## As a panel
+
+`VIRTUAL-REVIEWERS.md` (`/artdocs:virtual-review`) runs these five passes and the adversarial
+one as six reviewer roles, gives each domain a Strong/Weak Accept/Reject verdict, and records
+the round in `reviews/virtual/`. Use it before a submission; use the passes one at a time
+while writing.
+
 ## Where the output goes
 
 Every round goes in `reviews/`, even the internal ones — especially the internal ones. The
